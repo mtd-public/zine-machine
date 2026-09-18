@@ -3,7 +3,7 @@ import { CSSTransition, SwitchTransition } from "react-transition-group";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextContentBlockView from "./TextContentBlockView";
-import { estimateTextBlockCost, type ZineTextBlock } from "../../data/sections";
+import { VIRTUAL_PAGE_WIDTH, type ZineTextBlock } from "../../data/sections";
 import { useElementSize } from "../../hooks/useElementSize";
 import { colors } from "../../theme";
 
@@ -13,16 +13,15 @@ interface ZinePaperProps {
   pageIndex: number;
   textBlocks: ZineTextBlock[];
   onUpdateTextBlock: (blockId: string, text: string) => void;
+  onTransformTextBlock: (
+    blockId: string,
+    transform: Partial<Pick<ZineTextBlock, "x" | "y" | "width" | "height" | "rotation">>,
+  ) => void;
   onDeleteTextBlock: (blockId: string) => void;
 }
 
 const PAGE_RATIO = 8.5 / 11;
 const MAX_PAGE_HEIGHT = 900;
-const CONTENT_TOP_MARGIN = 56;
-const BLOCK_GAP = 6;
-const LINE_HEIGHT_PX = 20;
-const BLOCK_VERTICAL_PADDING = 8;
-const MIN_BLOCK_HEIGHT = 24;
 
 export default function ZinePaper({
   title,
@@ -30,6 +29,7 @@ export default function ZinePaper({
   pageIndex,
   textBlocks,
   onUpdateTextBlock,
+  onTransformTextBlock,
   onDeleteTextBlock,
 }: ZinePaperProps) {
   const [containerRef, { width, height }] = useElementSize<HTMLDivElement>();
@@ -49,16 +49,8 @@ export default function ZinePaper({
     pageHeight = pageWidth / PAGE_RATIO;
   }
 
-  const blockHeights = textBlocks.map((block) => {
-    const lineCount = estimateTextBlockCost(block.text);
-    return Math.max(MIN_BLOCK_HEIGHT, lineCount * LINE_HEIGHT_PX + BLOCK_VERTICAL_PADDING);
-  });
-  const blockTops: number[] = [];
-  let cursor = CONTENT_TOP_MARGIN;
-  for (const blockHeight of blockHeights) {
-    blockTops.push(cursor);
-    cursor += blockHeight + BLOCK_GAP;
-  }
+  const pageScale = pageWidth > 0 ? pageWidth / VIRTUAL_PAGE_WIDTH : 0;
+  const effectiveScale = pageScale * (zoom / 100);
 
   return (
     <Box
@@ -138,13 +130,14 @@ export default function ZinePaper({
                 </Typography>
               )}
 
-              {textBlocks.map((block, i) => (
+              {textBlocks.map((block) => (
                 <TextContentBlockView
                   key={block.id}
-                  text={block.text}
-                  top={blockTops[i]}
-                  height={blockHeights[i]}
-                  onConfirm={(text) => onUpdateTextBlock(block.id, text)}
+                  block={block}
+                  scale={pageScale}
+                  dragScale={effectiveScale}
+                  onConfirmText={(text) => onUpdateTextBlock(block.id, text)}
+                  onTransform={(transform) => onTransformTextBlock(block.id, transform)}
                   onDelete={() => onDeleteTextBlock(block.id)}
                 />
               ))}
