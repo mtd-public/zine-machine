@@ -15,9 +15,11 @@ import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import DeleteZineModal from "./DeleteZineModal";
 import { colors } from "../../theme";
 
 interface EditPanelProps {
+  zineTitle: string;
   pageIndex: number;
   totalPages: number;
   zineBlockUsed: number;
@@ -30,6 +32,7 @@ interface EditPanelProps {
   onPageDown: () => void;
   canPageUp: boolean;
   canPageDown: boolean;
+  onDeleteZine: () => void;
 }
 
 const iconButtonSx = {
@@ -38,6 +41,7 @@ const iconButtonSx = {
 };
 
 export default function EditPanel({
+  zineTitle,
   pageIndex,
   totalPages,
   zineBlockUsed,
@@ -50,8 +54,10 @@ export default function EditPanel({
   onPageDown,
   canPageUp,
   canPageDown,
+  onDeleteZine,
 }: EditPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   return (
     <Box
@@ -204,6 +210,7 @@ export default function EditPanel({
       {collapsed ? (
         <Tooltip title="Delete Zine" placement="right">
           <IconButton
+            onClick={() => setDeleteModalOpen(true)}
             sx={{ ...iconButtonSx, color: "error.main", borderColor: "error.main" }}
             aria-label="Delete Zine"
           >
@@ -211,10 +218,26 @@ export default function EditPanel({
           </IconButton>
         </Tooltip>
       ) : (
-        <Button variant="outlined" color="error" fullWidth startIcon={<DeleteIcon />}>
+        <Button
+          variant="outlined"
+          color="error"
+          fullWidth
+          startIcon={<DeleteIcon />}
+          onClick={() => setDeleteModalOpen(true)}
+        >
           Delete Zine
         </Button>
       )}
+
+      <DeleteZineModal
+        open={deleteModalOpen}
+        zineTitle={zineTitle}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={() => {
+          setDeleteModalOpen(false);
+          onDeleteZine();
+        }}
+      />
     </Box>
   );
 }

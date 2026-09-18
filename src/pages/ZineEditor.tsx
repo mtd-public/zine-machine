@@ -18,7 +18,7 @@ const ZOOM_STEP = 10;
 export default function ZineEditor() {
   const { zineId } = useParams<{ zineId: string }>();
   const navigate = useNavigate();
-  const { getZine } = useZines();
+  const { getZine, deleteZine } = useZines();
   const [pageIndex, setPageIndex] = useState(0);
   const [zoom, setZoom] = useState(100);
 
@@ -48,6 +48,7 @@ export default function ZineEditor() {
         <EditorTopBar title={zine.title} />
         <Box sx={{ flexGrow: 1, display: "flex", minHeight: 0 }}>
           <EditPanel
+            zineTitle={zine.title}
             pageIndex={pageIndex}
             totalPages={zineSections.length}
             zineBlockUsed={currentPage.zineBlockCount}
@@ -60,6 +61,10 @@ export default function ZineEditor() {
             onPageDown={() => setPageIndex((i) => Math.min(zineSections.length - 1, i + 1))}
             canPageUp={pageIndex > 0}
             canPageDown={pageIndex < zineSections.length - 1}
+            onDeleteZine={() => {
+              deleteZine(zine.id);
+              navigate("/");
+            }}
           />
           <ZinePaper title={zine.title} zoom={zoom} />
           <RightSidebar zineId={zine.id} />

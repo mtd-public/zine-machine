@@ -18,6 +18,7 @@ interface ZinesContextValue {
   getZine: (id: string) => Zine | undefined;
   getComments: (zineId: string) => ZineComment[];
   addComment: (zineId: string, text: string) => void;
+  deleteZine: (id: string) => void;
 }
 
 const ZinesContext = createContext<ZinesContextValue | undefined>(undefined);
@@ -75,6 +76,16 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const deleteZine = useCallback((id: string) => {
+    setZines((prev) => prev.filter((z) => z.id !== id));
+    setComments((prev) => {
+      if (!(id in prev)) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  }, []);
+
   const favorites = useMemo(() => zines.filter((z) => z.favorited), [zines]);
 
   const value = useMemo(
@@ -87,8 +98,19 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
       getZine,
       getComments,
       addComment,
+      deleteZine,
     }),
-    [zines, favorites, createZine, toggleFavorite, touchZine, getZine, getComments, addComment],
+    [
+      zines,
+      favorites,
+      createZine,
+      toggleFavorite,
+      touchZine,
+      getZine,
+      getComments,
+      addComment,
+      deleteZine,
+    ],
   );
 
   return <ZinesContext.Provider value={value}>{children}</ZinesContext.Provider>;
