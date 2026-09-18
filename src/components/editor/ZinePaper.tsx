@@ -1,18 +1,21 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import { getPageLabel } from "../../data/sections";
 import { useElementSize } from "../../hooks/useElementSize";
 import { colors } from "../../theme";
 
 interface ZinePaperProps {
   title: string;
   zoom: number;
+  pageIndex: number;
 }
 
 const PAGE_RATIO = 8.5 / 11;
 const MAX_PAGE_HEIGHT = 900;
 
-export default function ZinePaper({ title, zoom }: ZinePaperProps) {
+export default function ZinePaper({ title, zoom, pageIndex }: ZinePaperProps) {
   const [containerRef, { width, height }] = useElementSize<HTMLDivElement>();
+  const isTitlePage = pageIndex === 0;
 
   let pageHeight = Math.min(height, MAX_PAGE_HEIGHT);
   let pageWidth = pageHeight * PAGE_RATIO;
@@ -35,7 +38,7 @@ export default function ZinePaper({ title, zoom }: ZinePaperProps) {
       }}
     >
       <Box
-        id="section-title-page"
+        id="zine-page-canvas"
         sx={{
           flexShrink: 0,
           width: pageWidth,
@@ -51,12 +54,18 @@ export default function ZinePaper({ title, zoom }: ZinePaperProps) {
           transition: "transform 0.15s",
         }}
       >
-        <Typography
-          variant="h4"
-          sx={{ color: colors.eggplant, textAlign: "center", wordBreak: "break-word" }}
-        >
-          {title}
-        </Typography>
+        {isTitlePage ? (
+          <Typography
+            variant="h4"
+            sx={{ color: colors.eggplant, textAlign: "center", wordBreak: "break-word" }}
+          >
+            {title}
+          </Typography>
+        ) : (
+          <Typography variant="h5" sx={{ color: colors.textMuted, textAlign: "center" }}>
+            {getPageLabel(pageIndex)}
+          </Typography>
+        )}
       </Box>
     </Box>
   );

@@ -6,11 +6,14 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import TuneIcon from "@mui/icons-material/Tune";
+import VerticalAlignBottomIcon from "@mui/icons-material/VerticalAlignBottom";
+import VerticalAlignTopIcon from "@mui/icons-material/VerticalAlignTop";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import ZoomOutIcon from "@mui/icons-material/ZoomOut";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
+import Fab from "@mui/material/Fab";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
@@ -33,6 +36,11 @@ interface EditPanelProps {
   canPageUp: boolean;
   canPageDown: boolean;
   onDeleteZine: () => void;
+  canAddPageAbove: boolean;
+  onAddPageAbove: () => void;
+  onAddPageBelow: () => void;
+  canDeletePage: boolean;
+  onDeletePage: () => void;
 }
 
 const iconButtonSx = {
@@ -55,9 +63,15 @@ export default function EditPanel({
   canPageUp,
   canPageDown,
   onDeleteZine,
+  canAddPageAbove,
+  onAddPageAbove,
+  onAddPageBelow,
+  canDeletePage,
+  onDeletePage,
 }: EditPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [pageActionsOpen, setPageActionsOpen] = useState(false);
 
   return (
     <Box
@@ -71,7 +85,7 @@ export default function EditPanel({
         alignItems: collapsed ? "center" : "stretch",
         p: collapsed ? 1 : 2.5,
         gap: 2,
-        overflow: "hidden",
+        overflow: "visible",
       }}
     >
       <Stack
@@ -179,17 +193,92 @@ export default function EditPanel({
       </Box>
 
       <Stack spacing={1} sx={{ width: "100%", alignItems: collapsed ? "center" : "stretch" }}>
-        {collapsed ? (
-          <Tooltip title="Page Actions" placement="right">
-            <IconButton sx={iconButtonSx} aria-label="Page Actions">
-              <TuneIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        ) : (
-          <Button variant="outlined" fullWidth startIcon={<TuneIcon />} sx={{ justifyContent: "flex-start" }}>
-            Page Actions
-          </Button>
-        )}
+        <Box sx={{ position: "relative", width: collapsed ? "auto" : "100%" }}>
+          {collapsed ? (
+            <Tooltip title="Page Actions" placement="right">
+              <IconButton
+                onClick={() => setPageActionsOpen((o) => !o)}
+                sx={iconButtonSx}
+                aria-label="Page Actions"
+              >
+                <TuneIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          ) : (
+            <Button
+              variant="outlined"
+              fullWidth
+              startIcon={<TuneIcon />}
+              sx={{ justifyContent: "flex-start" }}
+              onClick={() => setPageActionsOpen((o) => !o)}
+            >
+              Page Actions
+            </Button>
+          )}
+
+          {pageActionsOpen && (
+            <Stack
+              direction="column"
+              spacing={1}
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: "100%",
+                ml: 1.5,
+                zIndex: 10,
+              }}
+            >
+              <Tooltip title="Add Page Above" placement="right">
+                <span>
+                  <Fab
+                    size="small"
+                    color="primary"
+                    disabled={!canAddPageAbove}
+                    onClick={() => {
+                      onAddPageAbove();
+                      setPageActionsOpen(false);
+                    }}
+                    aria-label="Add Page Above"
+                  >
+                    <VerticalAlignTopIcon fontSize="small" />
+                  </Fab>
+                </span>
+              </Tooltip>
+              <Tooltip title="Add Page Below" placement="right">
+                <span>
+                  <Fab
+                    size="small"
+                    color="primary"
+                    onClick={() => {
+                      onAddPageBelow();
+                      setPageActionsOpen(false);
+                    }}
+                    aria-label="Add Page Below"
+                  >
+                    <VerticalAlignBottomIcon fontSize="small" />
+                  </Fab>
+                </span>
+              </Tooltip>
+              <Tooltip title="Delete Page" placement="right">
+                <span>
+                  <Fab
+                    size="small"
+                    color="error"
+                    disabled={!canDeletePage}
+                    onClick={() => {
+                      onDeletePage();
+                      setPageActionsOpen(false);
+                    }}
+                    aria-label="Delete Page"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </Fab>
+                </span>
+              </Tooltip>
+            </Stack>
+          )}
+        </Box>
+
         {collapsed ? (
           <Tooltip title="Page Content" placement="right">
             <IconButton sx={iconButtonSx} aria-label="Page Content">

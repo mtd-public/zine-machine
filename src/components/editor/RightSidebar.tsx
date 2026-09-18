@@ -4,13 +4,22 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import CommentsPanel from "./CommentsPanel";
 import SectionsPanel from "./SectionsPanel";
+import type { ZinePageData } from "../../data/sections";
 import { colors } from "../../theme";
 
 interface RightSidebarProps {
   zineId: string;
+  pages: ZinePageData[];
+  selectedIndex: number;
+  onSelectPage: (index: number) => void;
 }
 
-export default function RightSidebar({ zineId }: RightSidebarProps) {
+export default function RightSidebar({
+  zineId,
+  pages,
+  selectedIndex,
+  onSelectPage,
+}: RightSidebarProps) {
   const [tab, setTab] = useState<"sections" | "comments">("sections");
 
   return (
@@ -46,7 +55,11 @@ export default function RightSidebar({ zineId }: RightSidebarProps) {
         <Tab label="Comments" value="comments" />
       </Tabs>
       <Box sx={{ p: 1.5, overflow: "hidden", flexGrow: 1 }}>
-        {tab === "sections" ? <SectionsPanel /> : <CommentsPanel zineId={zineId} />}
+        {tab === "sections" ? (
+          <SectionsPanel pages={pages} selectedIndex={selectedIndex} onSelect={onSelectPage} />
+        ) : (
+          <CommentsPanel zineId={zineId} />
+        )}
       </Box>
     </Box>
   );
