@@ -8,7 +8,7 @@ import EditorTopBar from "../components/editor/EditorTopBar";
 import EditPanel from "../components/editor/EditPanel";
 import RightSidebar from "../components/editor/RightSidebar";
 import ZinePaper from "../components/editor/ZinePaper";
-import { ZINE_BLOCK_CAPACITY } from "../data/sections";
+import { ZINE_BLOCK_CAPACITY, getPageZineBlockCount } from "../data/sections";
 import { useZines } from "../state/ZinesContext";
 
 const ZOOM_MIN = 50;
@@ -18,7 +18,17 @@ const ZOOM_STEP = 10;
 export default function ZineEditor() {
   const { zineId } = useParams<{ zineId: string }>();
   const navigate = useNavigate();
-  const { getZine, deleteZine, getPages, addPageAbove, addPageBelow, deletePage } = useZines();
+  const {
+    getZine,
+    deleteZine,
+    getPages,
+    addPageAbove,
+    addPageBelow,
+    deletePage,
+    addTextBlock,
+    updateTextBlock,
+    deleteTextBlock,
+  } = useZines();
   const [pageIndex, setPageIndex] = useState(0);
   const [zoom, setZoom] = useState(100);
 
@@ -54,7 +64,7 @@ export default function ZineEditor() {
             zineTitle={zine.title}
             pageIndex={safePageIndex}
             totalPages={pages.length}
-            zineBlockUsed={currentPage.zineBlockCount}
+            zineBlockUsed={getPageZineBlockCount(currentPage)}
             zineBlockCapacity={ZINE_BLOCK_CAPACITY}
             onZoomIn={() => setZoom((z) => Math.min(ZOOM_MAX, z + ZOOM_STEP))}
             onZoomOut={() => setZoom((z) => Math.max(ZOOM_MIN, z - ZOOM_STEP))}
@@ -79,8 +89,18 @@ export default function ZineEditor() {
               deletePage(zine.id, safePageIndex);
               setPageIndex((i) => Math.max(0, Math.min(i, pages.length - 2)));
             }}
+            onAddTextBlock={() => addTextBlock(zine.id, safePageIndex)}
           />
-          <ZinePaper title={zine.title} zoom={zoom} pageIndex={safePageIndex} />
+          <ZinePaper
+            title={zine.title}
+            zoom={zoom}
+            pageIndex={safePageIndex}
+            textBlocks={currentPage.textBlocks}
+            onUpdateTextBlock={(blockId, text) =>
+              updateTextBlock(zine.id, safePageIndex, blockId, text)
+            }
+            onDeleteTextBlock={(blockId) => deleteTextBlock(zine.id, safePageIndex, blockId)}
+          />
           <RightSidebar
             zineId={zine.id}
             pages={pages}

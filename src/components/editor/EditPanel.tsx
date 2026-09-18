@@ -5,6 +5,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import TextFieldsIcon from "@mui/icons-material/TextFields";
 import TuneIcon from "@mui/icons-material/Tune";
 import VerticalAlignBottomIcon from "@mui/icons-material/VerticalAlignBottom";
 import VerticalAlignTopIcon from "@mui/icons-material/VerticalAlignTop";
@@ -41,6 +42,7 @@ interface EditPanelProps {
   onAddPageBelow: () => void;
   canDeletePage: boolean;
   onDeletePage: () => void;
+  onAddTextBlock: () => void;
 }
 
 const iconButtonSx = {
@@ -68,10 +70,12 @@ export default function EditPanel({
   onAddPageBelow,
   canDeletePage,
   onDeletePage,
+  onAddTextBlock,
 }: EditPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [pageActionsOpen, setPageActionsOpen] = useState(false);
+  const [pageContentOpen, setPageContentOpen] = useState(false);
 
   return (
     <Box
@@ -283,17 +287,59 @@ export default function EditPanel({
           )}
         </Box>
 
-        {collapsed ? (
-          <Tooltip title="Page Content" placement="right">
-            <IconButton sx={iconButtonSx} aria-label="Page Content">
-              <ArticleIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        ) : (
-          <Button variant="outlined" fullWidth startIcon={<ArticleIcon />} sx={{ justifyContent: "flex-start" }}>
-            Page Content
-          </Button>
-        )}
+        <Box sx={{ position: "relative", width: collapsed ? "auto" : "100%" }}>
+          {collapsed ? (
+            <Tooltip title="Page Content" placement="right">
+              <IconButton
+                onClick={() => setPageContentOpen((o) => !o)}
+                sx={iconButtonSx}
+                aria-label="Page Content"
+              >
+                <ArticleIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          ) : (
+            <Button
+              variant="outlined"
+              fullWidth
+              startIcon={<ArticleIcon />}
+              sx={{ justifyContent: "flex-start" }}
+              onClick={() => setPageContentOpen((o) => !o)}
+            >
+              Page Content
+            </Button>
+          )}
+
+          {pageContentOpen && (
+            <Stack
+              direction="column"
+              spacing={1}
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: "100%",
+                ml: 1.5,
+                zIndex: 10,
+              }}
+            >
+              <Tooltip title="Add Text Content" placement="right">
+                <span>
+                  <Fab
+                    size="small"
+                    color="primary"
+                    onClick={() => {
+                      onAddTextBlock();
+                      setPageContentOpen(false);
+                    }}
+                    aria-label="Add Text Content"
+                  >
+                    <TextFieldsIcon fontSize="small" />
+                  </Fab>
+                </span>
+              </Tooltip>
+            </Stack>
+          )}
+        </Box>
       </Stack>
 
       <Box sx={{ flexGrow: 1 }} />
