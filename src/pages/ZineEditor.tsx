@@ -27,6 +27,7 @@ export default function ZineEditor() {
     deletePage,
     addTextBlock,
     updateTextBlock,
+    updateTextBlockTransform,
     deleteTextBlock,
   } = useZines();
   const [pageIndex, setPageIndex] = useState(0);
@@ -99,6 +100,9 @@ export default function ZineEditor() {
             textBlocks={currentPage.textBlocks}
             onUpdateTextBlock={(blockId, text) =>
               updateTextBlock(zine.id, safePageIndex, blockId, text)
+            }
+            onTransformTextBlock={(blockId, transform) =>
+              updateTextBlockTransform(zine.id, safePageIndex, blockId, transform)
             }
             onDeleteTextBlock={(blockId) => deleteTextBlock(zine.id, safePageIndex, blockId)}
           />

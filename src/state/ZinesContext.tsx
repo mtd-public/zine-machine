@@ -12,6 +12,7 @@ import {
   createTitlePage,
   TITLE_PAGE_ID,
   type ZinePageData,
+  type ZineTextBlock,
 } from "../data/sections";
 import { initialZines } from "../data/mockZines";
 import type { Zine, ZineComment } from "../types";
@@ -32,6 +33,12 @@ interface ZinesContextValue {
   deletePage: (zineId: string, atIndex: number) => void;
   addTextBlock: (zineId: string, pageIndex: number) => void;
   updateTextBlock: (zineId: string, pageIndex: number, blockId: string, text: string) => void;
+  updateTextBlockTransform: (
+    zineId: string,
+    pageIndex: number,
+    blockId: string,
+    transform: Partial<Pick<ZineTextBlock, "x" | "y" | "width" | "height" | "rotation">>,
+  ) => void;
   deleteTextBlock: (zineId: string, pageIndex: number, blockId: string) => void;
 }
 
@@ -144,7 +151,7 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
     (zineId: string, pageIndex: number) => {
       updatePageAt(zineId, pageIndex, (page) => {
         if (page.id === TITLE_PAGE_ID) return page;
-        return { ...page, textBlocks: [...page.textBlocks, createTextBlock()] };
+        return { ...page, textBlocks: [...page.textBlocks, createTextBlock(page.textBlocks)] };
       });
     },
     [updatePageAt],
@@ -155,6 +162,21 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
       updatePageAt(zineId, pageIndex, (page) => ({
         ...page,
         textBlocks: page.textBlocks.map((b) => (b.id === blockId ? { ...b, text } : b)),
+      }));
+    },
+    [updatePageAt],
+  );
+
+  const updateTextBlockTransform = useCallback(
+    (
+      zineId: string,
+      pageIndex: number,
+      blockId: string,
+      transform: Partial<Pick<ZineTextBlock, "x" | "y" | "width" | "height" | "rotation">>,
+    ) => {
+      updatePageAt(zineId, pageIndex, (page) => ({
+        ...page,
+        textBlocks: page.textBlocks.map((b) => (b.id === blockId ? { ...b, ...transform } : b)),
       }));
     },
     [updatePageAt],
@@ -205,6 +227,7 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
       deletePage,
       addTextBlock,
       updateTextBlock,
+      updateTextBlockTransform,
       deleteTextBlock,
     }),
     [
@@ -223,6 +246,7 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
       deletePage,
       addTextBlock,
       updateTextBlock,
+      updateTextBlockTransform,
       deleteTextBlock,
     ],
   );
