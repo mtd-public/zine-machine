@@ -9,6 +9,7 @@ export interface ZinePageData {
 }
 
 export const ZINE_BLOCK_CAPACITY = 26;
+export const TITLE_PAGE_ID = "page-title";
 
 const CHARS_PER_LINE = 42;
 const DEFAULT_TEXT = "Click edit to add your text here.";
@@ -21,7 +22,7 @@ function nextId(prefix: string) {
 }
 
 export function createTitlePage(): ZinePageData {
-  return { id: "page-title", textBlocks: [] };
+  return { id: TITLE_PAGE_ID, textBlocks: [] };
 }
 
 export function createBlankPage(): ZinePageData {
@@ -45,5 +46,6 @@ export function estimateTextBlockCost(text: string): number {
 }
 
 export function getPageZineBlockCount(page: ZinePageData): number {
+  if (page.id === TITLE_PAGE_ID) return ZINE_BLOCK_CAPACITY;
   return page.textBlocks.reduce((sum, block) => sum + estimateTextBlockCost(block.text), 0);
 }

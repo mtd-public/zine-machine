@@ -42,6 +42,7 @@ interface EditPanelProps {
   onAddPageBelow: () => void;
   canDeletePage: boolean;
   onDeletePage: () => void;
+  canAddTextBlock: boolean;
   onAddTextBlock: () => void;
 }
 
@@ -70,6 +71,7 @@ export default function EditPanel({
   onAddPageBelow,
   canDeletePage,
   onDeletePage,
+  canAddTextBlock,
   onAddTextBlock,
 }: EditPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -289,28 +291,39 @@ export default function EditPanel({
 
         <Box sx={{ position: "relative", width: collapsed ? "auto" : "100%" }}>
           {collapsed ? (
-            <Tooltip title="Page Content" placement="right">
-              <IconButton
-                onClick={() => setPageContentOpen((o) => !o)}
-                sx={iconButtonSx}
-                aria-label="Page Content"
-              >
-                <ArticleIcon fontSize="small" />
-              </IconButton>
+            <Tooltip
+              title={canAddTextBlock ? "Page Content" : "No content on the title page"}
+              placement="right"
+            >
+              <span>
+                <IconButton
+                  onClick={() => setPageContentOpen((o) => !o)}
+                  disabled={!canAddTextBlock}
+                  sx={iconButtonSx}
+                  aria-label="Page Content"
+                >
+                  <ArticleIcon fontSize="small" />
+                </IconButton>
+              </span>
             </Tooltip>
           ) : (
-            <Button
-              variant="outlined"
-              fullWidth
-              startIcon={<ArticleIcon />}
-              sx={{ justifyContent: "flex-start" }}
-              onClick={() => setPageContentOpen((o) => !o)}
-            >
-              Page Content
-            </Button>
+            <Tooltip title={canAddTextBlock ? "" : "No content on the title page"} placement="top">
+              <span>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  startIcon={<ArticleIcon />}
+                  sx={{ justifyContent: "flex-start" }}
+                  onClick={() => setPageContentOpen((o) => !o)}
+                  disabled={!canAddTextBlock}
+                >
+                  Page Content
+                </Button>
+              </span>
+            </Tooltip>
           )}
 
-          {pageContentOpen && (
+          {pageContentOpen && canAddTextBlock && (
             <Stack
               direction="column"
               spacing={1}
