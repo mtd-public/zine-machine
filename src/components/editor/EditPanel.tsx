@@ -65,7 +65,7 @@ export default function EditPanel({
         alignItems: collapsed ? "center" : "stretch",
         p: collapsed ? 1 : 2.5,
         gap: 2,
-        overflow: "auto",
+        overflow: "hidden",
       }}
     >
       <Stack

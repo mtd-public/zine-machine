@@ -16,12 +16,13 @@ export default function RightSidebar({ zineId }: RightSidebarProps) {
   return (
     <Box
       sx={{
-        width: 300,
+        width: 220,
         flexShrink: 0,
         bgcolor: "#FFFFFF",
         borderLeft: `3px solid ${colors.eggplant}`,
         display: "flex",
         flexDirection: "column",
+        overflow: "hidden",
       }}
     >
       <Tabs
@@ -30,18 +31,21 @@ export default function RightSidebar({ zineId }: RightSidebarProps) {
         variant="fullWidth"
         sx={{
           borderBottom: `2px solid ${colors.background}`,
-          minHeight: 48,
+          minHeight: 40,
           "& .MuiTab-root": {
             fontFamily: "'Fredoka', sans-serif",
             fontWeight: 600,
-            minHeight: 48,
+            minHeight: 40,
+            fontSize: "0.8rem",
+            px: 1,
+            minWidth: 0,
           },
         }}
       >
         <Tab label="Sections" value="sections" />
         <Tab label="Comments" value="comments" />
       </Tabs>
-      <Box sx={{ p: 2, overflow: "auto", flexGrow: 1 }}>
+      <Box sx={{ p: 1.5, overflow: "hidden", flexGrow: 1 }}>
         {tab === "sections" ? <SectionsPanel /> : <CommentsPanel zineId={zineId} />}
       </Box>
     </Box>
