@@ -10,6 +10,7 @@ import {
   createBlankPage,
   createTextBlock,
   createTitlePage,
+  rebalancePages,
   TITLE_PAGE_ID,
   type ZinePageData,
 } from "../data/sections";
@@ -140,25 +141,30 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const addTextBlock = useCallback(
-    (zineId: string, pageIndex: number) => {
-      updatePageAt(zineId, pageIndex, (page) => {
-        if (page.id === TITLE_PAGE_ID) return page;
-        return { ...page, textBlocks: [...page.textBlocks, createTextBlock()] };
-      });
-    },
-    [updatePageAt],
-  );
+  const addTextBlock = useCallback((zineId: string, pageIndex: number) => {
+    setPages((prev) => {
+      const current = prev[zineId] ?? [createTitlePage()];
+      if (pageIndex < 0 || pageIndex >= current.length) return prev;
+      if (current[pageIndex].id === TITLE_PAGE_ID) return prev;
+      const withNewBlock = current.map((page, i) =>
+        i === pageIndex ? { ...page, textBlocks: [...page.textBlocks, createTextBlock()] } : page,
+      );
+      return { ...prev, [zineId]: rebalancePages(withNewBlock) };
+    });
+  }, []);
 
-  const updateTextBlock = useCallback(
-    (zineId: string, pageIndex: number, blockId: string, text: string) => {
-      updatePageAt(zineId, pageIndex, (page) => ({
-        ...page,
-        textBlocks: page.textBlocks.map((b) => (b.id === blockId ? { ...b, text } : b)),
-      }));
-    },
-    [updatePageAt],
-  );
+  const updateTextBlock = useCallback((zineId: string, pageIndex: number, blockId: string, text: string) => {
+    setPages((prev) => {
+      const current = prev[zineId] ?? [createTitlePage()];
+      if (pageIndex < 0 || pageIndex >= current.length) return prev;
+      const updated = current.map((page, i) =>
+        i === pageIndex
+          ? { ...page, textBlocks: page.textBlocks.map((b) => (b.id === blockId ? { ...b, text } : b)) }
+          : page,
+      );
+      return { ...prev, [zineId]: rebalancePages(updated) };
+    });
+  }, []);
 
   const deleteTextBlock = useCallback(
     (zineId: string, pageIndex: number, blockId: string) => {

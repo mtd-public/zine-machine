@@ -45,7 +45,37 @@ export function estimateTextBlockCost(text: string): number {
   return Math.max(1, lines);
 }
 
+export function sumTextBlockCosts(blocks: ZineTextBlock[]): number {
+  return blocks.reduce((sum, block) => sum + estimateTextBlockCost(block.text), 0);
+}
+
 export function getPageZineBlockCount(page: ZinePageData): number {
   if (page.id === TITLE_PAGE_ID) return ZINE_BLOCK_CAPACITY;
-  return page.textBlocks.reduce((sum, block) => sum + estimateTextBlockCost(block.text), 0);
+  return sumTextBlockCosts(page.textBlocks);
+}
+
+// Walks the pages in order and, for any page whose text blocks exceed the
+// ZB capacity, moves blocks from the end of that page onto the front of the
+// next one (creating it if needed). Spillover cascades forward until every
+// page fits or a single oversized block is left alone on its own page.
+export function rebalancePages(pages: ZinePageData[]): ZinePageData[] {
+  const next = pages.map((page) => ({ ...page, textBlocks: [...page.textBlocks] }));
+  let i = 0;
+  while (i < next.length) {
+    const page = next[i];
+    if (page.id !== TITLE_PAGE_ID) {
+      let total = sumTextBlockCosts(page.textBlocks);
+      while (total > ZINE_BLOCK_CAPACITY && page.textBlocks.length > 1) {
+        const spilled = page.textBlocks.pop();
+        if (!spilled) break;
+        total -= estimateTextBlockCost(spilled.text);
+        if (i + 1 >= next.length) {
+          next.push(createBlankPage());
+        }
+        next[i + 1].textBlocks.unshift(spilled);
+      }
+    }
+    i += 1;
+  }
+  return next;
 }
