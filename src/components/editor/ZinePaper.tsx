@@ -3,11 +3,7 @@ import { CSSTransition, SwitchTransition } from "react-transition-group";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextContentBlockView from "./TextContentBlockView";
-import {
-  estimateTextBlockCost,
-  ZINE_BLOCK_CAPACITY,
-  type ZineTextBlock,
-} from "../../data/sections";
+import { estimateTextBlockCost, type ZineTextBlock } from "../../data/sections";
 import { useElementSize } from "../../hooks/useElementSize";
 import { colors } from "../../theme";
 
@@ -23,9 +19,10 @@ interface ZinePaperProps {
 const PAGE_RATIO = 8.5 / 11;
 const MAX_PAGE_HEIGHT = 900;
 const CONTENT_TOP_MARGIN = 56;
-const CONTENT_BOTTOM_MARGIN = 24;
-const BLOCK_GAP = 8;
-const MIN_BLOCK_HEIGHT = 88;
+const BLOCK_GAP = 6;
+const LINE_HEIGHT_PX = 20;
+const BLOCK_VERTICAL_PADDING = 8;
+const MIN_BLOCK_HEIGHT = 24;
 
 export default function ZinePaper({
   title,
@@ -52,13 +49,10 @@ export default function ZinePaper({
     pageHeight = pageWidth / PAGE_RATIO;
   }
 
-  const blockCosts = textBlocks.map((block) => estimateTextBlockCost(block.text));
-  const availableHeight = Math.max(0, pageHeight - CONTENT_TOP_MARGIN - CONTENT_BOTTOM_MARGIN);
-  const gapTotal = BLOCK_GAP * Math.max(0, textBlocks.length - 1);
-  const usableHeight = Math.max(0, availableHeight - gapTotal);
-  const blockHeights = blockCosts.map((cost) =>
-    Math.max(MIN_BLOCK_HEIGHT, (cost / ZINE_BLOCK_CAPACITY) * usableHeight),
-  );
+  const blockHeights = textBlocks.map((block) => {
+    const lineCount = estimateTextBlockCost(block.text);
+    return Math.max(MIN_BLOCK_HEIGHT, lineCount * LINE_HEIGHT_PX + BLOCK_VERTICAL_PADDING);
+  });
   const blockTops: number[] = [];
   let cursor = CONTENT_TOP_MARGIN;
   for (const blockHeight of blockHeights) {
