@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { initialZines } from "../data/mockZines";
-import type { Zine } from "../types";
+import type { Zine, ZineComment } from "../types";
 
 interface ZinesContextValue {
   zines: Zine[];
@@ -16,12 +16,15 @@ interface ZinesContextValue {
   toggleFavorite: (id: string) => void;
   touchZine: (id: string) => void;
   getZine: (id: string) => Zine | undefined;
+  getComments: (zineId: string) => ZineComment[];
+  addComment: (zineId: string, text: string) => void;
 }
 
 const ZinesContext = createContext<ZinesContextValue | undefined>(undefined);
 
 export function ZinesProvider({ children }: { children: ReactNode }) {
   const [zines, setZines] = useState<Zine[]>(initialZines);
+  const [comments, setComments] = useState<Record<string, ZineComment[]>>({});
 
   const createZine = useCallback((title: string) => {
     const now = new Date().toISOString();
@@ -55,11 +58,37 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
     [zines],
   );
 
+  const getComments = useCallback(
+    (zineId: string) => comments[zineId] ?? [],
+    [comments],
+  );
+
+  const addComment = useCallback((zineId: string, text: string) => {
+    const comment: ZineComment = {
+      id: `c-${Date.now()}`,
+      text,
+      createdAt: new Date().toISOString(),
+    };
+    setComments((prev) => ({
+      ...prev,
+      [zineId]: [...(prev[zineId] ?? []), comment],
+    }));
+  }, []);
+
   const favorites = useMemo(() => zines.filter((z) => z.favorited), [zines]);
 
   const value = useMemo(
-    () => ({ zines, favorites, createZine, toggleFavorite, touchZine, getZine }),
-    [zines, favorites, createZine, toggleFavorite, touchZine, getZine],
+    () => ({
+      zines,
+      favorites,
+      createZine,
+      toggleFavorite,
+      touchZine,
+      getZine,
+      getComments,
+      addComment,
+    }),
+    [zines, favorites, createZine, toggleFavorite, touchZine, getZine, getComments, addComment],
   );
 
   return <ZinesContext.Provider value={value}>{children}</ZinesContext.Provider>;
