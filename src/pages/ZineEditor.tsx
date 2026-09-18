@@ -8,7 +8,7 @@ import EditorTopBar from "../components/editor/EditorTopBar";
 import EditPanel from "../components/editor/EditPanel";
 import RightSidebar from "../components/editor/RightSidebar";
 import ZinePaper from "../components/editor/ZinePaper";
-import { ZINE_BLOCK_CAPACITY, zineSections } from "../data/sections";
+import { ZINE_BLOCK_CAPACITY } from "../data/sections";
 import { useZines } from "../state/ZinesContext";
 
 const ZOOM_MIN = 50;
@@ -18,12 +18,11 @@ const ZOOM_STEP = 10;
 export default function ZineEditor() {
   const { zineId } = useParams<{ zineId: string }>();
   const navigate = useNavigate();
-  const { getZine, deleteZine } = useZines();
+  const { getZine, deleteZine, getPages, addPageAbove, addPageBelow, deletePage } = useZines();
   const [pageIndex, setPageIndex] = useState(0);
   const [zoom, setZoom] = useState(100);
 
   const zine = zineId ? getZine(zineId) : undefined;
-  const currentPage = zineSections[pageIndex];
 
   if (!zine) {
     return (
@@ -41,6 +40,10 @@ export default function ZineEditor() {
     );
   }
 
+  const pages = getPages(zine.id);
+  const safePageIndex = Math.min(pageIndex, pages.length - 1);
+  const currentPage = pages[safePageIndex];
+
   return (
     <Box sx={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <EditorNavRail />
@@ -49,8 +52,8 @@ export default function ZineEditor() {
         <Box sx={{ flexGrow: 1, display: "flex", minHeight: 0 }}>
           <EditPanel
             zineTitle={zine.title}
-            pageIndex={pageIndex}
-            totalPages={zineSections.length}
+            pageIndex={safePageIndex}
+            totalPages={pages.length}
             zineBlockUsed={currentPage.zineBlockCount}
             zineBlockCapacity={ZINE_BLOCK_CAPACITY}
             onZoomIn={() => setZoom((z) => Math.min(ZOOM_MAX, z + ZOOM_STEP))}
@@ -58,16 +61,32 @@ export default function ZineEditor() {
             canZoomIn={zoom < ZOOM_MAX}
             canZoomOut={zoom > ZOOM_MIN}
             onPageUp={() => setPageIndex((i) => Math.max(0, i - 1))}
-            onPageDown={() => setPageIndex((i) => Math.min(zineSections.length - 1, i + 1))}
-            canPageUp={pageIndex > 0}
-            canPageDown={pageIndex < zineSections.length - 1}
+            onPageDown={() => setPageIndex((i) => Math.min(pages.length - 1, i + 1))}
+            canPageUp={safePageIndex > 0}
+            canPageDown={safePageIndex < pages.length - 1}
             onDeleteZine={() => {
               deleteZine(zine.id);
               navigate("/");
             }}
+            canAddPageAbove={safePageIndex > 0}
+            onAddPageAbove={() => addPageAbove(zine.id, safePageIndex)}
+            onAddPageBelow={() => {
+              addPageBelow(zine.id, safePageIndex);
+              setPageIndex(safePageIndex + 1);
+            }}
+            canDeletePage={safePageIndex > 0}
+            onDeletePage={() => {
+              deletePage(zine.id, safePageIndex);
+              setPageIndex((i) => Math.max(0, Math.min(i, pages.length - 2)));
+            }}
           />
-          <ZinePaper title={zine.title} zoom={zoom} />
-          <RightSidebar zineId={zine.id} />
+          <ZinePaper title={zine.title} zoom={zoom} pageIndex={safePageIndex} />
+          <RightSidebar
+            zineId={zine.id}
+            pages={pages}
+            selectedIndex={safePageIndex}
+            onSelectPage={setPageIndex}
+          />
         </Box>
       </Box>
     </Box>

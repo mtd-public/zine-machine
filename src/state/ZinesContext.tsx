@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { createBlankPage, createTitlePage, type ZinePageData } from "../data/sections";
 import { initialZines } from "../data/mockZines";
 import type { Zine, ZineComment } from "../types";
 
@@ -19,6 +20,10 @@ interface ZinesContextValue {
   getComments: (zineId: string) => ZineComment[];
   addComment: (zineId: string, text: string) => void;
   deleteZine: (id: string) => void;
+  getPages: (zineId: string) => ZinePageData[];
+  addPageAbove: (zineId: string, atIndex: number) => void;
+  addPageBelow: (zineId: string, atIndex: number) => void;
+  deletePage: (zineId: string, atIndex: number) => void;
 }
 
 const ZinesContext = createContext<ZinesContextValue | undefined>(undefined);
@@ -26,6 +31,9 @@ const ZinesContext = createContext<ZinesContextValue | undefined>(undefined);
 export function ZinesProvider({ children }: { children: ReactNode }) {
   const [zines, setZines] = useState<Zine[]>(initialZines);
   const [comments, setComments] = useState<Record<string, ZineComment[]>>({});
+  const [pages, setPages] = useState<Record<string, ZinePageData[]>>(() =>
+    Object.fromEntries(initialZines.map((z) => [z.id, [createTitlePage()]])),
+  );
 
   const createZine = useCallback((title: string) => {
     const now = new Date().toISOString();
@@ -37,6 +45,7 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
       lastAccessed: now,
     };
     setZines((prev) => [zine, ...prev]);
+    setPages((prev) => ({ ...prev, [zine.id]: [createTitlePage()] }));
     return zine;
   }, []);
 
@@ -76,9 +85,49 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const getPages = useCallback(
+    (zineId: string) => pages[zineId] ?? [createTitlePage()],
+    [pages],
+  );
+
+  const addPageAbove = useCallback((zineId: string, atIndex: number) => {
+    if (atIndex <= 0) return;
+    setPages((prev) => {
+      const current = prev[zineId] ?? [createTitlePage()];
+      const next = [...current];
+      next.splice(atIndex, 0, createBlankPage());
+      return { ...prev, [zineId]: next };
+    });
+  }, []);
+
+  const addPageBelow = useCallback((zineId: string, atIndex: number) => {
+    setPages((prev) => {
+      const current = prev[zineId] ?? [createTitlePage()];
+      const next = [...current];
+      next.splice(atIndex + 1, 0, createBlankPage());
+      return { ...prev, [zineId]: next };
+    });
+  }, []);
+
+  const deletePage = useCallback((zineId: string, atIndex: number) => {
+    if (atIndex <= 0) return;
+    setPages((prev) => {
+      const current = prev[zineId] ?? [createTitlePage()];
+      if (current.length <= 1) return prev;
+      const next = current.filter((_, i) => i !== atIndex);
+      return { ...prev, [zineId]: next };
+    });
+  }, []);
+
   const deleteZine = useCallback((id: string) => {
     setZines((prev) => prev.filter((z) => z.id !== id));
     setComments((prev) => {
+      if (!(id in prev)) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setPages((prev) => {
       if (!(id in prev)) return prev;
       const next = { ...prev };
       delete next[id];
@@ -99,6 +148,10 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
       getComments,
       addComment,
       deleteZine,
+      getPages,
+      addPageAbove,
+      addPageBelow,
+      deletePage,
     }),
     [
       zines,
@@ -110,6 +163,10 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
       getComments,
       addComment,
       deleteZine,
+      getPages,
+      addPageAbove,
+      addPageBelow,
+      deletePage,
     ],
   );
 
