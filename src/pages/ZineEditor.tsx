@@ -5,6 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import EditorNavRail from "../components/editor/EditorNavRail";
 import EditorTopBar from "../components/editor/EditorTopBar";
 import EditPanel from "../components/editor/EditPanel";
+import RightSidebar from "../components/editor/RightSidebar";
 import ZinePaper from "../components/editor/ZinePaper";
 import { useZines } from "../state/ZinesContext";
 
@@ -39,6 +40,7 @@ export default function ZineEditor() {
         <Box sx={{ flexGrow: 1, display: "flex", minHeight: 0 }}>
           <EditPanel />
           <ZinePaper title={zine.title} />
+          <RightSidebar zineId={zine.id} />
         </Box>
       </Box>
     </Box>

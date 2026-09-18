@@ -5,3 +5,9 @@ export interface Zine {
   createdAt: string;
   lastAccessed: string;
 }
+
+export interface ZineComment {
+  id: string;
+  text: string;
+  createdAt: string;
+}

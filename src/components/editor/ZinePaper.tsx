@@ -20,6 +20,7 @@ export default function ZinePaper({ title }: ZinePaperProps) {
       }}
     >
       <Box
+        id="section-title-page"
         sx={{
           aspectRatio: "8.5 / 11",
           height: "min(100%, 900px)",
