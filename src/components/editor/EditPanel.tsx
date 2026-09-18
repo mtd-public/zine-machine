@@ -104,7 +104,11 @@ export default function EditPanel({
         </Tooltip>
         {!collapsed && (
           <Typography variant="subtitle2" sx={{ color: colors.eggplant }}>
-            Editing page {pageIndex + 1} / {totalPages}
+            Editing page{" "}
+            <Box component="span" sx={{ color: colors.bubblegum }}>
+              {pageIndex + 1}
+            </Box>{" "}
+            / {totalPages}
           </Typography>
         )}
       </Stack>
