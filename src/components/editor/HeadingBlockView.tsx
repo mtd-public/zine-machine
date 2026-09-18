@@ -10,16 +10,19 @@ import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
-import type { ZineTextBlock } from "../../data/sections";
+import { HEADING_FONT_SIZE, type HeadingLevel, type ZineHeadingBlock } from "../../data/sections";
 import { useBlockTransform, type GeometryTransform } from "../../hooks/useBlockTransform";
 import { colors } from "../../theme";
 
-interface TextContentBlockViewProps {
-  block: ZineTextBlock;
+interface HeadingBlockViewProps {
+  block: ZineHeadingBlock;
   scale: number;
   onConfirmText: (text: string) => void;
   onTransform: (transform: GeometryTransform) => void;
+  onUpdateStyle: (patch: Partial<Pick<ZineHeadingBlock, "level" | "color">>) => void;
   onDelete: () => void;
 }
 
@@ -43,13 +46,14 @@ const handleButtonSx = {
   "&:hover": { bgcolor: colors.grape },
 };
 
-export default function TextContentBlockView({
+export default function HeadingBlockView({
   block,
   scale,
   onConfirmText,
   onTransform,
+  onUpdateStyle,
   onDelete,
-}: TextContentBlockViewProps) {
+}: HeadingBlockViewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(block.text);
 
@@ -76,6 +80,7 @@ export default function TextContentBlockView({
   const w = current.width * scale;
   const h = current.height * scale;
   const rotationStyle = current.rotation ? { transform: `rotate(${current.rotation}deg)` } : {};
+  const fontSize = HEADING_FONT_SIZE[block.level] * scale;
 
   if (isEditing) {
     return (
@@ -107,14 +112,21 @@ export default function TextContentBlockView({
               height: "100%",
               px: 1,
               "& .MuiInputBase-root": { height: "100%", alignItems: "flex-start" },
-              "& textarea": { height: "100% !important", overflow: "auto !important" },
+              "& textarea": {
+                height: "100% !important",
+                overflow: "auto !important",
+                fontFamily: "'Fredoka', sans-serif",
+                fontWeight: 700,
+                fontSize,
+                color: block.color,
+              },
             }}
           />
 
           <Tooltip title="Drag to move">
             <IconButton
               onPointerDown={handleMovePointerDown}
-              aria-label="Move text block"
+              aria-label="Move heading block"
               sx={{ ...handleButtonSx, position: "absolute", top: 2, left: 2, cursor: "move" }}
             >
               <OpenWithIcon sx={{ fontSize: 12 }} />
@@ -123,7 +135,7 @@ export default function TextContentBlockView({
           <Tooltip title="Drag to tilt">
             <IconButton
               onPointerDown={handleRotatePointerDown}
-              aria-label="Rotate text block"
+              aria-label="Rotate heading block"
               sx={{ ...handleButtonSx, position: "absolute", top: 2, right: 2, cursor: "grab" }}
             >
               <RotateRightIcon sx={{ fontSize: 12 }} />
@@ -131,7 +143,7 @@ export default function TextContentBlockView({
           </Tooltip>
           <Box
             onPointerDown={handleResizePointerDown}
-            aria-label="Resize text block"
+            aria-label="Resize heading block"
             role="button"
             sx={{
               position: "absolute",
@@ -152,6 +164,7 @@ export default function TextContentBlockView({
             position: "absolute",
             top: top - 22,
             left,
+            alignItems: "center",
           }}
         >
           <IconButton onClick={confirmText} aria-label="Confirm edit" sx={tagButtonSx}>
@@ -160,6 +173,57 @@ export default function TextContentBlockView({
           <IconButton onClick={cancelText} aria-label="Cancel edit" sx={tagButtonSx}>
             <CloseIcon sx={{ color: colors.textMuted, fontSize: 10 }} />
           </IconButton>
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={block.level}
+            onChange={(_, value: HeadingLevel | null) => {
+              if (value) onUpdateStyle({ level: value });
+            }}
+            sx={{
+              height: 16,
+              bgcolor: "#FFFFFF",
+              "& .MuiToggleButton-root": {
+                p: 0,
+                width: 16,
+                height: 16,
+                fontSize: 9,
+                fontWeight: 800,
+                lineHeight: 1,
+                border: `1.5px solid ${colors.grape}`,
+                color: colors.grape,
+                "&.Mui-selected": { bgcolor: colors.grape, color: "#FFFFFF" },
+              },
+            }}
+          >
+            <ToggleButton value="heading" aria-label="Large heading">
+              H
+            </ToggleButton>
+            <ToggleButton value="subheading" aria-label="Subheading">
+              h
+            </ToggleButton>
+          </ToggleButtonGroup>
+          <Tooltip title="Heading color">
+            <Box
+              component="input"
+              type="color"
+              value={block.color}
+              onChange={(e) => onUpdateStyle({ color: (e.target as HTMLInputElement).value })}
+              aria-label="Heading text color"
+              sx={{
+                width: 16,
+                height: 16,
+                p: 0,
+                border: `1.5px solid ${colors.grape}`,
+                borderRadius: "50%",
+                cursor: "pointer",
+                overflow: "hidden",
+                appearance: "none",
+                "&::-webkit-color-swatch-wrapper": { p: 0 },
+                "&::-webkit-color-swatch": { border: "none", borderRadius: "50%" },
+              }}
+            />
+          </Tooltip>
         </Stack>
       </>
     );
@@ -177,21 +241,30 @@ export default function TextContentBlockView({
         ...rotationStyle,
       }}
     >
-      <Typography variant="body2" sx={{ color: colors.eggplant, whiteSpace: "pre-wrap" }}>
+      <Typography
+        sx={{
+          fontFamily: "'Fredoka', sans-serif",
+          fontWeight: 700,
+          fontSize,
+          lineHeight: 1.15,
+          color: block.color,
+          whiteSpace: "pre-wrap",
+        }}
+      >
         {block.text}
-        <Tooltip title="Edit text" placement="right">
+        <Tooltip title="Edit heading" placement="right">
           <IconButton
             onClick={startEdit}
-            aria-label="Edit text"
+            aria-label="Edit heading"
             sx={{ ...tagButtonSx, display: "inline-flex", verticalAlign: "middle", ml: 0.75 }}
           >
             <EditIcon sx={{ color: colors.grape, fontSize: 10 }} />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Delete text block" placement="right">
+        <Tooltip title="Delete heading block" placement="right">
           <IconButton
             onClick={onDelete}
-            aria-label="Delete text block"
+            aria-label="Delete heading block"
             sx={{ ...tagButtonSx, display: "inline-flex", verticalAlign: "middle", ml: 0.5 }}
           >
             <DeleteIcon sx={{ color: "error.main", fontSize: 10 }} />

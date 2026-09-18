@@ -26,9 +26,11 @@ export default function ZineEditor() {
     addPageBelow,
     deletePage,
     addTextBlock,
-    updateTextBlock,
-    updateTextBlockTransform,
-    deleteTextBlock,
+    addHeadingBlock,
+    updateBlockText,
+    updateBlockTransform,
+    updateHeadingStyle,
+    deleteBlock,
   } = useZines();
   const [pageIndex, setPageIndex] = useState(0);
   const [zoom, setZoom] = useState(100);
@@ -111,6 +113,7 @@ export default function ZineEditor() {
             }}
             canAddTextBlock={safePageIndex !== 0}
             onAddTextBlock={() => addTextBlock(zine.id, safePageIndex)}
+            onAddHeadingBlock={(level) => addHeadingBlock(zine.id, safePageIndex, level)}
           />
           <ZinePaper
             ref={zinePaperRef}
@@ -119,13 +122,16 @@ export default function ZineEditor() {
             selectedIndex={safePageIndex}
             pages={pages}
             onSelectIndex={setPageIndex}
-            onUpdateTextBlock={(pageIdx, blockId, text) =>
-              updateTextBlock(zine.id, pageIdx, blockId, text)
+            onUpdateBlockText={(pageIdx, blockId, text) =>
+              updateBlockText(zine.id, pageIdx, blockId, text)
             }
-            onTransformTextBlock={(pageIdx, blockId, transform) =>
-              updateTextBlockTransform(zine.id, pageIdx, blockId, transform)
+            onTransformBlock={(pageIdx, blockId, transform) =>
+              updateBlockTransform(zine.id, pageIdx, blockId, transform)
             }
-            onDeleteTextBlock={(pageIdx, blockId) => deleteTextBlock(zine.id, pageIdx, blockId)}
+            onUpdateHeadingStyle={(pageIdx, blockId, patch) =>
+              updateHeadingStyle(zine.id, pageIdx, blockId, patch)
+            }
+            onDeleteBlock={(pageIdx, blockId) => deleteBlock(zine.id, pageIdx, blockId)}
           />
           <RightSidebar
             zineId={zine.id}

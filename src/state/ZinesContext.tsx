@@ -8,13 +8,16 @@ import {
 } from "react";
 import {
   createBlankPage,
+  createHeadingBlock,
   createTextBlock,
   createTitlePage,
   TITLE_PAGE_ID,
+  type HeadingLevel,
+  type ZineHeadingBlock,
   type ZinePageData,
-  type ZineTextBlock,
 } from "../data/sections";
 import { initialZines } from "../data/mockZines";
+import type { GeometryTransform } from "../hooks/useBlockTransform";
 import type { Zine, ZineComment } from "../types";
 
 interface ZinesContextValue {
@@ -32,14 +35,21 @@ interface ZinesContextValue {
   addPageBelow: (zineId: string, atIndex: number) => void;
   deletePage: (zineId: string, atIndex: number) => void;
   addTextBlock: (zineId: string, pageIndex: number) => void;
-  updateTextBlock: (zineId: string, pageIndex: number, blockId: string, text: string) => void;
-  updateTextBlockTransform: (
+  addHeadingBlock: (zineId: string, pageIndex: number, level: HeadingLevel) => void;
+  updateBlockText: (zineId: string, pageIndex: number, blockId: string, text: string) => void;
+  updateBlockTransform: (
     zineId: string,
     pageIndex: number,
     blockId: string,
-    transform: Partial<Pick<ZineTextBlock, "x" | "y" | "width" | "height" | "rotation">>,
+    transform: GeometryTransform,
   ) => void;
-  deleteTextBlock: (zineId: string, pageIndex: number, blockId: string) => void;
+  updateHeadingStyle: (
+    zineId: string,
+    pageIndex: number,
+    blockId: string,
+    patch: Partial<Pick<ZineHeadingBlock, "level" | "color">>,
+  ) => void;
+  deleteBlock: (zineId: string, pageIndex: number, blockId: string) => void;
 }
 
 const ZinesContext = createContext<ZinesContextValue | undefined>(undefined);
@@ -151,42 +161,62 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
     (zineId: string, pageIndex: number) => {
       updatePageAt(zineId, pageIndex, (page) => {
         if (page.id === TITLE_PAGE_ID) return page;
-        return { ...page, textBlocks: [...page.textBlocks, createTextBlock(page.textBlocks)] };
+        return { ...page, blocks: [...page.blocks, createTextBlock(page.blocks)] };
       });
     },
     [updatePageAt],
   );
 
-  const updateTextBlock = useCallback(
+  const addHeadingBlock = useCallback(
+    (zineId: string, pageIndex: number, level: HeadingLevel) => {
+      updatePageAt(zineId, pageIndex, (page) => {
+        if (page.id === TITLE_PAGE_ID) return page;
+        return { ...page, blocks: [...page.blocks, createHeadingBlock(page.blocks, level)] };
+      });
+    },
+    [updatePageAt],
+  );
+
+  const updateBlockText = useCallback(
     (zineId: string, pageIndex: number, blockId: string, text: string) => {
       updatePageAt(zineId, pageIndex, (page) => ({
         ...page,
-        textBlocks: page.textBlocks.map((b) => (b.id === blockId ? { ...b, text } : b)),
+        blocks: page.blocks.map((b) => (b.id === blockId ? { ...b, text } : b)),
       }));
     },
     [updatePageAt],
   );
 
-  const updateTextBlockTransform = useCallback(
+  const updateBlockTransform = useCallback(
+    (zineId: string, pageIndex: number, blockId: string, transform: GeometryTransform) => {
+      updatePageAt(zineId, pageIndex, (page) => ({
+        ...page,
+        blocks: page.blocks.map((b) => (b.id === blockId ? { ...b, ...transform } : b)),
+      }));
+    },
+    [updatePageAt],
+  );
+
+  const updateHeadingStyle = useCallback(
     (
       zineId: string,
       pageIndex: number,
       blockId: string,
-      transform: Partial<Pick<ZineTextBlock, "x" | "y" | "width" | "height" | "rotation">>,
+      patch: Partial<Pick<ZineHeadingBlock, "level" | "color">>,
     ) => {
       updatePageAt(zineId, pageIndex, (page) => ({
         ...page,
-        textBlocks: page.textBlocks.map((b) => (b.id === blockId ? { ...b, ...transform } : b)),
+        blocks: page.blocks.map((b) => (b.id === blockId && b.kind === "heading" ? { ...b, ...patch } : b)),
       }));
     },
     [updatePageAt],
   );
 
-  const deleteTextBlock = useCallback(
+  const deleteBlock = useCallback(
     (zineId: string, pageIndex: number, blockId: string) => {
       updatePageAt(zineId, pageIndex, (page) => ({
         ...page,
-        textBlocks: page.textBlocks.filter((b) => b.id !== blockId),
+        blocks: page.blocks.filter((b) => b.id !== blockId),
       }));
     },
     [updatePageAt],
@@ -226,9 +256,11 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
       addPageBelow,
       deletePage,
       addTextBlock,
-      updateTextBlock,
-      updateTextBlockTransform,
-      deleteTextBlock,
+      addHeadingBlock,
+      updateBlockText,
+      updateBlockTransform,
+      updateHeadingStyle,
+      deleteBlock,
     }),
     [
       zines,
@@ -245,9 +277,11 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
       addPageBelow,
       deletePage,
       addTextBlock,
-      updateTextBlock,
-      updateTextBlockTransform,
-      deleteTextBlock,
+      addHeadingBlock,
+      updateBlockText,
+      updateBlockTransform,
+      updateHeadingStyle,
+      deleteBlock,
     ],
   );
 
