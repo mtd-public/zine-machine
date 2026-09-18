@@ -26,7 +26,6 @@ type Transform = Partial<Pick<ZineTextBlock, "x" | "y" | "width" | "height" | "r
 interface TextContentBlockViewProps {
   block: ZineTextBlock;
   scale: number;
-  dragScale: number;
   onConfirmText: (text: string) => void;
   onTransform: (transform: Transform) => void;
   onDelete: () => void;
@@ -59,7 +58,6 @@ function clamp(value: number, min: number, max: number) {
 export default function TextContentBlockView({
   block,
   scale,
-  dragScale,
   onConfirmText,
   onTransform,
   onDelete,
@@ -95,8 +93,8 @@ export default function TextContentBlockView({
 
   const handleMovePointerDown = usePointerDrag(
     (dx, dy) => {
-      const vdx = dragScale > 0 ? dx / dragScale : 0;
-      const vdy = dragScale > 0 ? dy / dragScale : 0;
+      const vdx = scale > 0 ? dx / scale : 0;
+      const vdy = scale > 0 ? dy / scale : 0;
       setLive({
         x: clamp(block.x + vdx, 0, VIRTUAL_PAGE_WIDTH - block.width),
         y: clamp(block.y + vdy, 0, VIRTUAL_PAGE_HEIGHT - block.height),
@@ -110,8 +108,8 @@ export default function TextContentBlockView({
       const rad = (block.rotation * Math.PI) / 180;
       const localDx = dx * Math.cos(rad) + dy * Math.sin(rad);
       const localDy = -dx * Math.sin(rad) + dy * Math.cos(rad);
-      const vdx = dragScale > 0 ? localDx / dragScale : 0;
-      const vdy = dragScale > 0 ? localDy / dragScale : 0;
+      const vdx = scale > 0 ? localDx / scale : 0;
+      const vdy = scale > 0 ? localDy / scale : 0;
       setLive({
         width: clamp(block.width + vdx, MIN_BLOCK_WIDTH, VIRTUAL_PAGE_WIDTH - block.x),
         height: clamp(block.height + vdy, MIN_BLOCK_HEIGHT, VIRTUAL_PAGE_HEIGHT - block.y),

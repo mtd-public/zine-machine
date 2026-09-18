@@ -28,6 +28,7 @@ interface EditPanelProps {
   totalPages: number;
   zineBlockUsed: number;
   zineBlockCapacity: number;
+  zoom: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
   canZoomIn: boolean;
@@ -57,6 +58,7 @@ export default function EditPanel({
   totalPages,
   zineBlockUsed,
   zineBlockCapacity,
+  zoom,
   onZoomIn,
   onZoomOut,
   canZoomIn,
@@ -125,7 +127,7 @@ export default function EditPanel({
         sx={{ justifyContent: "space-between", alignItems: "center" }}
       >
         <Stack direction={collapsed ? "column" : "row"} spacing={1}>
-          <Tooltip title="Zoom out" placement={collapsed ? "right" : "top"}>
+          <Tooltip title={`Zoom out (${zoom}%)`} placement={collapsed ? "right" : "top"}>
             <span>
               <IconButton
                 size="small"
@@ -138,7 +140,7 @@ export default function EditPanel({
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title="Zoom in" placement={collapsed ? "right" : "top"}>
+          <Tooltip title={`Zoom in (${zoom}%)`} placement={collapsed ? "right" : "top"}>
             <span>
               <IconButton
                 size="small"

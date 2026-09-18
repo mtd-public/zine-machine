@@ -1,195 +1,198 @@
-import { useEffect, useRef } from "react";
-import { CSSTransition, SwitchTransition } from "react-transition-group";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextContentBlockView from "./TextContentBlockView";
-import { VIRTUAL_PAGE_WIDTH, type ZineTextBlock } from "../../data/sections";
+import { VIRTUAL_PAGE_WIDTH, type ZinePageData, type ZineTextBlock } from "../../data/sections";
 import { useElementSize } from "../../hooks/useElementSize";
 import { colors } from "../../theme";
+
+export interface ZinePaperHandle {
+  scrollToPage: (index: number) => void;
+}
 
 interface ZinePaperProps {
   title: string;
   zoom: number;
-  pageIndex: number;
-  totalPages: number;
-  textBlocks: ZineTextBlock[];
-  onUpdateTextBlock: (blockId: string, text: string) => void;
+  selectedIndex: number;
+  pages: ZinePageData[];
+  onSelectIndex: (index: number) => void;
+  onUpdateTextBlock: (pageIndex: number, blockId: string, text: string) => void;
   onTransformTextBlock: (
+    pageIndex: number,
     blockId: string,
     transform: Partial<Pick<ZineTextBlock, "x" | "y" | "width" | "height" | "rotation">>,
   ) => void;
-  onDeleteTextBlock: (blockId: string) => void;
+  onDeleteTextBlock: (pageIndex: number, blockId: string) => void;
 }
 
 const PAGE_RATIO = 8.5 / 11;
 const MAX_PAGE_HEIGHT = 900;
-const PEEK_HEIGHT = 22;
-const PEEK_GAP = 14;
+const PAGE_GAP = 40;
 
-export default function ZinePaper({
-  title,
-  zoom,
-  pageIndex,
-  totalPages,
-  textBlocks,
-  onUpdateTextBlock,
-  onTransformTextBlock,
-  onDeleteTextBlock,
-}: ZinePaperProps) {
+const ZinePaper = forwardRef<ZinePaperHandle, ZinePaperProps>(function ZinePaper(
+  {
+    title,
+    zoom,
+    selectedIndex,
+    pages,
+    onSelectIndex,
+    onUpdateTextBlock,
+    onTransformTextBlock,
+    onDeleteTextBlock,
+  },
+  ref,
+) {
   const [containerRef, { width, height }] = useElementSize<HTMLDivElement>();
-  const isTitlePage = pageIndex === 0;
-  const nodeRef = useRef<HTMLDivElement>(null);
+  const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const ratiosRef = useRef<Map<number, number>>(new Map());
 
-  const prevIndexRef = useRef(pageIndex);
-  const direction = pageIndex >= prevIndexRef.current ? "forward" : "backward";
-  useEffect(() => {
-    prevIndexRef.current = pageIndex;
-  }, [pageIndex]);
-
-  const showPrevPeek = pageIndex > 0;
-  const showNextPeek = pageIndex < totalPages - 1;
-  const reservedForPeeks =
-    (showPrevPeek ? PEEK_HEIGHT + PEEK_GAP : 0) + (showNextPeek ? PEEK_HEIGHT + PEEK_GAP : 0);
-
-  let pageHeight = Math.min(height - reservedForPeeks, MAX_PAGE_HEIGHT);
-  let pageWidth = pageHeight * PAGE_RATIO;
-  if (pageWidth > width) {
-    pageWidth = width;
-    pageHeight = pageWidth / PAGE_RATIO;
+  // Base page size comes from the container alone, independent of which
+  // page is selected or how many neighbors are visible, so every page in
+  // the stack renders at the same width and height.
+  let baseHeight = Math.min(height, MAX_PAGE_HEIGHT);
+  let baseWidth = baseHeight * PAGE_RATIO;
+  if (baseWidth > width) {
+    baseWidth = width;
+    baseHeight = baseWidth / PAGE_RATIO;
   }
+  const pageWidth = baseWidth * (zoom / 100);
+  const pageHeight = baseHeight * (zoom / 100);
+  const scale = pageWidth > 0 ? pageWidth / VIRTUAL_PAGE_WIDTH : 0;
 
-  const pageScale = pageWidth > 0 ? pageWidth / VIRTUAL_PAGE_WIDTH : 0;
-  const effectiveScale = pageScale * (zoom / 100);
+  useImperativeHandle(ref, () => ({
+    scrollToPage(index: number) {
+      pageRefs.current.get(index)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    },
+  }));
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const indexAttr = (entry.target as HTMLElement).dataset.pageIndex;
+          if (indexAttr === undefined) continue;
+          ratiosRef.current.set(Number(indexAttr), entry.intersectionRatio);
+        }
+        let bestIndex = -1;
+        let bestRatio = 0;
+        ratiosRef.current.forEach((ratio, index) => {
+          if (ratio > bestRatio) {
+            bestRatio = ratio;
+            bestIndex = index;
+          }
+        });
+        if (bestIndex >= 0) onSelectIndex(bestIndex);
+      },
+      { root: container, threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
+    pageRefs.current.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pages.length, width, height, onSelectIndex]);
 
   return (
     <Box
       ref={containerRef}
       sx={{
         flexGrow: 1,
+        overflowY: "auto",
+        overflowX: "hidden",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        overflow: "auto",
         p: 4,
+        gap: `${PAGE_GAP}px`,
         bgcolor: colors.background,
       }}
     >
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          transform: `scale(${zoom / 100})`,
-          transition: "transform 0.15s",
-        }}
-      >
-        {showPrevPeek && (
+      {pages.map((page, index) => {
+        const isSelected = index === selectedIndex;
+        const isTitlePage = index === 0;
+        return (
           <Box
+            key={page.id}
+            ref={(el: HTMLDivElement | null) => {
+              if (el) pageRefs.current.set(index, el);
+              else pageRefs.current.delete(index);
+            }}
+            data-page-index={index}
             sx={{
               flexShrink: 0,
               width: pageWidth,
-              height: PEEK_HEIGHT,
-              mb: `${PEEK_GAP}px`,
+              height: pageHeight,
               bgcolor: "#FFFFFF",
-              borderRadius: "2px 2px 0 0",
-              boxShadow: "0 -2px 5px rgba(42, 9, 68, 0.12)",
+              border: isSelected
+                ? `4px solid ${colors.bubblegum}`
+                : "1px solid rgba(42, 9, 68, 0.12)",
+              boxShadow: isSelected
+                ? "8px 8px 0 rgba(42, 9, 68, 0.15)"
+                : "0 2px 10px rgba(42, 9, 68, 0.08)",
+              position: "relative",
+              overflow: "hidden",
+              transition: "border-color 0.15s, box-shadow 0.15s",
             }}
-          />
-        )}
-
-        <Box
-          sx={{
-            flexShrink: 0,
-            width: pageWidth,
-            height: pageHeight,
-            bgcolor: "#FFFFFF",
-            border: `4px solid ${colors.bubblegum}`,
-            boxShadow: `8px 8px 0 rgba(42, 9, 68, 0.15)`,
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <SwitchTransition mode="out-in">
-            <CSSTransition
-              key={pageIndex}
-              nodeRef={nodeRef}
-              classNames={`page-slide-${direction}`}
-              timeout={300}
+          >
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                p: 4,
+              }}
             >
               <Box
-                id="zine-page-canvas"
-                ref={nodeRef}
                 sx={{
                   position: "absolute",
-                  inset: 0,
+                  top: 16,
+                  right: 20,
+                  minWidth: 28,
+                  height: 28,
+                  px: 1,
+                  borderRadius: "999px",
+                  bgcolor: isSelected ? colors.eggplant : colors.textMuted,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  p: 4,
                 }}
               >
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 16,
-                    right: 20,
-                    minWidth: 28,
-                    height: 28,
-                    px: 1,
-                    borderRadius: "999px",
-                    bgcolor: colors.eggplant,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
+                <Typography
+                  variant="caption"
+                  sx={{ color: colors.banana, fontWeight: 800, lineHeight: 1 }}
                 >
-                  <Typography
-                    variant="caption"
-                    sx={{ color: colors.banana, fontWeight: 800, lineHeight: 1 }}
-                  >
-                    {pageIndex + 1}
-                  </Typography>
-                </Box>
-
-                {isTitlePage && (
-                  <Typography
-                    variant="h4"
-                    sx={{ color: colors.eggplant, textAlign: "center", wordBreak: "break-word" }}
-                  >
-                    {title}
-                  </Typography>
-                )}
-
-                {textBlocks.map((block) => (
-                  <TextContentBlockView
-                    key={block.id}
-                    block={block}
-                    scale={pageScale}
-                    dragScale={effectiveScale}
-                    onConfirmText={(text) => onUpdateTextBlock(block.id, text)}
-                    onTransform={(transform) => onTransformTextBlock(block.id, transform)}
-                    onDelete={() => onDeleteTextBlock(block.id)}
-                  />
-                ))}
+                  {index + 1}
+                </Typography>
               </Box>
-            </CSSTransition>
-          </SwitchTransition>
-        </Box>
 
-        {showNextPeek && (
-          <Box
-            sx={{
-              flexShrink: 0,
-              width: pageWidth,
-              height: PEEK_HEIGHT,
-              mt: `${PEEK_GAP}px`,
-              bgcolor: "#FFFFFF",
-              borderRadius: "0 0 2px 2px",
-              boxShadow: "0 2px 5px rgba(42, 9, 68, 0.12)",
-            }}
-          />
-        )}
-      </Box>
+              {isTitlePage && (
+                <Typography
+                  variant="h4"
+                  sx={{ color: colors.eggplant, textAlign: "center", wordBreak: "break-word" }}
+                >
+                  {title}
+                </Typography>
+              )}
+
+              {page.textBlocks.map((block) => (
+                <TextContentBlockView
+                  key={block.id}
+                  block={block}
+                  scale={scale}
+                  onConfirmText={(text) => onUpdateTextBlock(index, block.id, text)}
+                  onTransform={(transform) => onTransformTextBlock(index, block.id, transform)}
+                  onDelete={() => onDeleteTextBlock(index, block.id)}
+                />
+              ))}
+            </Box>
+          </Box>
+        );
+      })}
     </Box>
   );
-}
+});
+
+export default ZinePaper;

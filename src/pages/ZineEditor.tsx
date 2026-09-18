@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -7,7 +7,7 @@ import EditorNavRail from "../components/editor/EditorNavRail";
 import EditorTopBar from "../components/editor/EditorTopBar";
 import EditPanel from "../components/editor/EditPanel";
 import RightSidebar from "../components/editor/RightSidebar";
-import ZinePaper from "../components/editor/ZinePaper";
+import ZinePaper, { type ZinePaperHandle } from "../components/editor/ZinePaper";
 import { ZINE_BLOCK_CAPACITY, getPageZineBlockCount } from "../data/sections";
 import { useZines } from "../state/ZinesContext";
 
@@ -32,6 +32,8 @@ export default function ZineEditor() {
   } = useZines();
   const [pageIndex, setPageIndex] = useState(0);
   const [zoom, setZoom] = useState(100);
+  const zinePaperRef = useRef<ZinePaperHandle>(null);
+  const pendingScrollRef = useRef<number | null>(null);
 
   const zine = zineId ? getZine(zineId) : undefined;
 
@@ -55,6 +57,19 @@ export default function ZineEditor() {
   const safePageIndex = Math.min(pageIndex, pages.length - 1);
   const currentPage = pages[safePageIndex];
 
+  useEffect(() => {
+    if (pendingScrollRef.current !== null) {
+      const target = pendingScrollRef.current;
+      pendingScrollRef.current = null;
+      zinePaperRef.current?.scrollToPage(target);
+    }
+  }, [pages.length]);
+
+  const selectPage = (index: number) => {
+    setPageIndex(index);
+    zinePaperRef.current?.scrollToPage(index);
+  };
+
   return (
     <Box sx={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <EditorNavRail />
@@ -67,12 +82,13 @@ export default function ZineEditor() {
             totalPages={pages.length}
             zineBlockUsed={getPageZineBlockCount(currentPage)}
             zineBlockCapacity={ZINE_BLOCK_CAPACITY}
+            zoom={zoom}
             onZoomIn={() => setZoom((z) => Math.min(ZOOM_MAX, z + ZOOM_STEP))}
             onZoomOut={() => setZoom((z) => Math.max(ZOOM_MIN, z - ZOOM_STEP))}
             canZoomIn={zoom < ZOOM_MAX}
             canZoomOut={zoom > ZOOM_MIN}
-            onPageUp={() => setPageIndex((i) => Math.max(0, i - 1))}
-            onPageDown={() => setPageIndex((i) => Math.min(pages.length - 1, i + 1))}
+            onPageUp={() => selectPage(Math.max(0, safePageIndex - 1))}
+            onPageDown={() => selectPage(Math.min(pages.length - 1, safePageIndex + 1))}
             canPageUp={safePageIndex > 0}
             canPageDown={safePageIndex < pages.length - 1}
             onDeleteZine={() => {
@@ -83,35 +99,39 @@ export default function ZineEditor() {
             onAddPageAbove={() => addPageAbove(zine.id, safePageIndex)}
             onAddPageBelow={() => {
               addPageBelow(zine.id, safePageIndex);
+              pendingScrollRef.current = safePageIndex + 1;
               setPageIndex(safePageIndex + 1);
             }}
             canDeletePage={safePageIndex > 0}
             onDeletePage={() => {
               deletePage(zine.id, safePageIndex);
-              setPageIndex((i) => Math.max(0, Math.min(i, pages.length - 2)));
+              const nextIndex = Math.max(0, Math.min(safePageIndex, pages.length - 2));
+              pendingScrollRef.current = nextIndex;
+              setPageIndex(nextIndex);
             }}
             canAddTextBlock={safePageIndex !== 0}
             onAddTextBlock={() => addTextBlock(zine.id, safePageIndex)}
           />
           <ZinePaper
+            ref={zinePaperRef}
             title={zine.title}
             zoom={zoom}
-            pageIndex={safePageIndex}
-            totalPages={pages.length}
-            textBlocks={currentPage.textBlocks}
-            onUpdateTextBlock={(blockId, text) =>
-              updateTextBlock(zine.id, safePageIndex, blockId, text)
+            selectedIndex={safePageIndex}
+            pages={pages}
+            onSelectIndex={setPageIndex}
+            onUpdateTextBlock={(pageIdx, blockId, text) =>
+              updateTextBlock(zine.id, pageIdx, blockId, text)
             }
-            onTransformTextBlock={(blockId, transform) =>
-              updateTextBlockTransform(zine.id, safePageIndex, blockId, transform)
+            onTransformTextBlock={(pageIdx, blockId, transform) =>
+              updateTextBlockTransform(zine.id, pageIdx, blockId, transform)
             }
-            onDeleteTextBlock={(blockId) => deleteTextBlock(zine.id, safePageIndex, blockId)}
+            onDeleteTextBlock={(pageIdx, blockId) => deleteTextBlock(zine.id, pageIdx, blockId)}
           />
           <RightSidebar
             zineId={zine.id}
             pages={pages}
             selectedIndex={safePageIndex}
-            onSelectPage={setPageIndex}
+            onSelectPage={selectPage}
           />
         </Box>
       </Box>
