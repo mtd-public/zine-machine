@@ -4,9 +4,10 @@ import { colors } from "../../theme";
 
 interface ZinePaperProps {
   title: string;
+  zoom: number;
 }
 
-export default function ZinePaper({ title }: ZinePaperProps) {
+export default function ZinePaper({ title, zoom }: ZinePaperProps) {
   return (
     <Box
       sx={{
@@ -25,12 +26,14 @@ export default function ZinePaper({ title }: ZinePaperProps) {
           aspectRatio: "8.5 / 11",
           height: "min(100%, 900px)",
           bgcolor: "#FFFFFF",
-          border: `3px solid ${colors.eggplant}`,
-          boxShadow: "8px 8px 0 rgba(42, 9, 68, 0.15)",
+          border: `4px solid ${colors.bubblegum}`,
+          boxShadow: `8px 8px 0 rgba(42, 9, 68, 0.15)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           p: 4,
+          transform: `scale(${zoom / 100})`,
+          transition: "transform 0.15s",
         }}
       >
         <Typography

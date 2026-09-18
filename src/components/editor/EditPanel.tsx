@@ -1,24 +1,220 @@
+import { useState } from "react";
+import ArticleIcon from "@mui/icons-material/Article";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import DeleteIcon from "@mui/icons-material/Delete";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import TuneIcon from "@mui/icons-material/Tune";
+import ZoomInIcon from "@mui/icons-material/ZoomIn";
+import ZoomOutIcon from "@mui/icons-material/ZoomOut";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { colors } from "../../theme";
 
-export default function EditPanel() {
+interface EditPanelProps {
+  pageIndex: number;
+  totalPages: number;
+  zineBlockUsed: number;
+  zineBlockCapacity: number;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  canZoomIn: boolean;
+  canZoomOut: boolean;
+  onPageUp: () => void;
+  onPageDown: () => void;
+  canPageUp: boolean;
+  canPageDown: boolean;
+}
+
+const iconButtonSx = {
+  border: `2px solid ${colors.eggplant}`,
+  borderRadius: 1.5,
+};
+
+export default function EditPanel({
+  pageIndex,
+  totalPages,
+  zineBlockUsed,
+  zineBlockCapacity,
+  onZoomIn,
+  onZoomOut,
+  canZoomIn,
+  canZoomOut,
+  onPageUp,
+  onPageDown,
+  canPageUp,
+  canPageDown,
+}: EditPanelProps) {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
     <Box
       sx={{
-        width: 300,
+        width: collapsed ? 64 : 300,
         flexShrink: 0,
         bgcolor: "#FFFFFF",
         borderRight: `3px solid ${colors.eggplant}`,
-        p: 2.5,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: collapsed ? "center" : "stretch",
+        p: collapsed ? 1 : 2.5,
+        gap: 2,
+        overflow: "auto",
       }}
     >
-      <Typography variant="subtitle2" sx={{ color: colors.grape, mb: 1 }}>
-        Edit
-      </Typography>
-      <Typography variant="body2" sx={{ color: colors.textMuted }}>
-        Tools coming soon.
-      </Typography>
+      <Stack
+        direction="row"
+        sx={{ alignItems: "center", gap: 1, justifyContent: collapsed ? "center" : "flex-start" }}
+      >
+        <Tooltip title={collapsed ? "Expand" : "Collapse"} placement="right">
+          <IconButton
+            size="small"
+            onClick={() => setCollapsed((c) => !c)}
+            sx={{ color: colors.grape }}
+            aria-label={collapsed ? "Expand" : "Collapse"}
+          >
+            {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+          </IconButton>
+        </Tooltip>
+        {!collapsed && (
+          <Typography variant="subtitle2" sx={{ color: colors.eggplant }}>
+            Editing page {pageIndex + 1} / {totalPages}
+          </Typography>
+        )}
+      </Stack>
+
+      <Stack
+        direction={collapsed ? "column" : "row"}
+        spacing={1}
+        sx={{ justifyContent: "space-between", alignItems: "center" }}
+      >
+        <Stack direction={collapsed ? "column" : "row"} spacing={1}>
+          <Tooltip title="Zoom out" placement={collapsed ? "right" : "top"}>
+            <span>
+              <IconButton
+                size="small"
+                onClick={onZoomOut}
+                disabled={!canZoomOut}
+                sx={iconButtonSx}
+                aria-label="Zoom out"
+              >
+                <ZoomOutIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Zoom in" placement={collapsed ? "right" : "top"}>
+            <span>
+              <IconButton
+                size="small"
+                onClick={onZoomIn}
+                disabled={!canZoomIn}
+                sx={iconButtonSx}
+                aria-label="Zoom in"
+              >
+                <ZoomInIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Stack>
+        <Stack direction={collapsed ? "column" : "row"} spacing={1}>
+          <Tooltip title="Select page above" placement={collapsed ? "right" : "top"}>
+            <span>
+              <IconButton
+                size="small"
+                onClick={onPageUp}
+                disabled={!canPageUp}
+                sx={iconButtonSx}
+                aria-label="Select page above"
+              >
+                <KeyboardArrowUpIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Select page below" placement={collapsed ? "right" : "top"}>
+            <span>
+              <IconButton
+                size="small"
+                onClick={onPageDown}
+                disabled={!canPageDown}
+                sx={iconButtonSx}
+                aria-label="Select page below"
+              >
+                <KeyboardArrowDownIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Stack>
+      </Stack>
+
+      <Box
+        sx={{
+          border: `2px solid ${colors.eggplant}`,
+          borderRadius: 1.5,
+          py: 1,
+          px: collapsed ? 0.5 : 1,
+          textAlign: "center",
+          width: collapsed ? "100%" : "auto",
+        }}
+      >
+        <Typography
+          variant={collapsed ? "caption" : "body2"}
+          sx={{ color: colors.eggplant, fontWeight: 700 }}
+        >
+          {collapsed
+            ? `${zineBlockUsed}/${zineBlockCapacity}`
+            : `${zineBlockUsed} / ${zineBlockCapacity} ZB`}
+        </Typography>
+      </Box>
+
+      <Stack spacing={1} sx={{ width: "100%", alignItems: collapsed ? "center" : "stretch" }}>
+        {collapsed ? (
+          <Tooltip title="Page Actions" placement="right">
+            <IconButton sx={iconButtonSx} aria-label="Page Actions">
+              <TuneIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        ) : (
+          <Button variant="outlined" fullWidth startIcon={<TuneIcon />} sx={{ justifyContent: "flex-start" }}>
+            Page Actions
+          </Button>
+        )}
+        {collapsed ? (
+          <Tooltip title="Page Content" placement="right">
+            <IconButton sx={iconButtonSx} aria-label="Page Content">
+              <ArticleIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        ) : (
+          <Button variant="outlined" fullWidth startIcon={<ArticleIcon />} sx={{ justifyContent: "flex-start" }}>
+            Page Content
+          </Button>
+        )}
+      </Stack>
+
+      <Box sx={{ flexGrow: 1 }} />
+
+      <Divider sx={{ borderColor: colors.background, width: "100%" }} />
+
+      {collapsed ? (
+        <Tooltip title="Delete Zine" placement="right">
+          <IconButton
+            sx={{ ...iconButtonSx, color: "error.main", borderColor: "error.main" }}
+            aria-label="Delete Zine"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      ) : (
+        <Button variant="outlined" color="error" fullWidth startIcon={<DeleteIcon />}>
+          Delete Zine
+        </Button>
+      )}
     </Box>
   );
 }
