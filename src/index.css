@@ -6,3 +6,41 @@ body {
   margin: 0;
   font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
 }
+
+.page-slide-forward-enter {
+  opacity: 0;
+  transform: translateX(48px) scale(0.97);
+}
+.page-slide-forward-enter-active {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 300ms ease;
+}
+.page-slide-forward-exit {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+.page-slide-forward-exit-active {
+  opacity: 0;
+  transform: translateX(-48px) scale(0.97);
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 300ms ease;
+}
+
+.page-slide-backward-enter {
+  opacity: 0;
+  transform: translateX(-48px) scale(0.97);
+}
+.page-slide-backward-enter-active {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 300ms ease;
+}
+.page-slide-backward-exit {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+.page-slide-backward-exit-active {
+  opacity: 0;
+  transform: translateX(48px) scale(0.97);
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 300ms ease;
+}
