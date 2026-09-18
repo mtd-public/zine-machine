@@ -5,6 +5,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -17,6 +18,16 @@ interface TextContentBlockViewProps {
   onConfirm: (text: string) => void;
   onDelete: () => void;
 }
+
+const tagButtonSx = {
+  width: 16,
+  height: 16,
+  minHeight: 0,
+  p: 0,
+  bgcolor: "#FFFFFF",
+  border: `1.5px solid ${colors.grape}`,
+  "&:hover": { bgcolor: colors.background },
+};
 
 export default function TextContentBlockView({
   text,
@@ -43,101 +54,91 @@ export default function TextContentBlockView({
     setIsEditing(false);
   };
 
-  return (
-    <>
-      <Box
-        sx={{
-          position: "absolute",
-          top,
-          left: "8%",
-          width: "84%",
-          height,
-          borderRadius: 1.5,
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          ...(isEditing
-            ? { border: `2px solid ${colors.bubblegum}`, bgcolor: "#FFFFFF" }
-            : { border: "none", bgcolor: "transparent" }),
-        }}
-      >
-        {isEditing && (
-          <Box
+  if (isEditing) {
+    return (
+      <>
+        <Box
+          sx={{
+            position: "absolute",
+            top,
+            left: "8%",
+            width: "82%",
+            height,
+            borderRadius: 1.5,
+            overflow: "hidden",
+            border: `2px solid ${colors.bubblegum}`,
+            bgcolor: "#FFFFFF",
+          }}
+        >
+          <TextField
+            autoFocus
+            multiline
+            fullWidth
+            variant="standard"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            slotProps={{ input: { disableUnderline: true } }}
             sx={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 0.5,
-              p: 0.25,
-              borderBottom: `1px solid ${colors.background}`,
-              flexShrink: 0,
+              height: "100%",
+              px: 1,
+              "& .MuiInputBase-root": { height: "100%", alignItems: "flex-start" },
+              "& textarea": { height: "100% !important", overflow: "auto !important" },
             }}
-          >
-            <IconButton size="small" onClick={confirm} aria-label="Confirm edit">
-              <CheckIcon fontSize="small" sx={{ color: colors.slime }} />
-            </IconButton>
-            <IconButton size="small" onClick={cancel} aria-label="Cancel edit">
-              <CloseIcon fontSize="small" sx={{ color: colors.textMuted }} />
-            </IconButton>
-            <IconButton size="small" onClick={onDelete} aria-label="Delete text block">
-              <DeleteIcon fontSize="small" sx={{ color: "error.main" }} />
-            </IconButton>
-          </Box>
-        )}
-
-        <Box sx={{ flexGrow: 1, overflow: "hidden", p: isEditing ? 1 : 0, minHeight: 0 }}>
-          {isEditing ? (
-            <TextField
-              autoFocus
-              multiline
-              fullWidth
-              variant="standard"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              slotProps={{ input: { disableUnderline: true } }}
-              sx={{
-                height: "100%",
-                "& .MuiInputBase-root": { height: "100%", alignItems: "flex-start" },
-                "& textarea": { height: "100% !important", overflow: "auto !important" },
-              }}
-            />
-          ) : (
-            <Typography
-              variant="body2"
-              sx={{
-                color: colors.eggplant,
-                whiteSpace: "pre-wrap",
-                overflow: "hidden",
-                height: "100%",
-              }}
-            >
-              {text}
-            </Typography>
-          )}
+          />
         </Box>
-      </Box>
+        <Stack
+          direction="row"
+          spacing={0.5}
+          sx={{
+            position: "absolute",
+            top: top + height / 2,
+            left: "91%",
+            transform: "translateY(-50%)",
+          }}
+        >
+          <IconButton onClick={confirm} aria-label="Confirm edit" sx={tagButtonSx}>
+            <CheckIcon sx={{ color: colors.slime, fontSize: 10 }} />
+          </IconButton>
+          <IconButton onClick={cancel} aria-label="Cancel edit" sx={tagButtonSx}>
+            <CloseIcon sx={{ color: colors.textMuted, fontSize: 10 }} />
+          </IconButton>
+        </Stack>
+      </>
+    );
+  }
 
-      {!isEditing && (
+  return (
+    <Box
+      sx={{
+        position: "absolute",
+        top,
+        left: "8%",
+        width: "84%",
+        height,
+        overflow: "hidden",
+      }}
+    >
+      <Typography variant="body2" sx={{ color: colors.eggplant, whiteSpace: "pre-wrap" }}>
+        {text}
         <Tooltip title="Edit text" placement="right">
           <IconButton
-            size="small"
             onClick={startEdit}
             aria-label="Edit text"
-            sx={{
-              position: "absolute",
-              top: top + height / 2,
-              left: "93%",
-              transform: "translate(-50%, -50%)",
-              width: 24,
-              height: 24,
-              bgcolor: "#FFFFFF",
-              border: `1.5px solid ${colors.grape}`,
-              "&:hover": { bgcolor: colors.background },
-            }}
+            sx={{ ...tagButtonSx, display: "inline-flex", verticalAlign: "middle", ml: 0.75 }}
           >
-            <EditIcon sx={{ color: colors.grape, fontSize: 14 }} />
+            <EditIcon sx={{ color: colors.grape, fontSize: 10 }} />
           </IconButton>
         </Tooltip>
-      )}
-    </>
+        <Tooltip title="Delete text block" placement="right">
+          <IconButton
+            onClick={onDelete}
+            aria-label="Delete text block"
+            sx={{ ...tagButtonSx, display: "inline-flex", verticalAlign: "middle", ml: 0.5 }}
+          >
+            <DeleteIcon sx={{ color: "error.main", fontSize: 10 }} />
+          </IconButton>
+        </Tooltip>
+      </Typography>
+    </Box>
   );
 }
