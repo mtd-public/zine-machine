@@ -10,6 +10,7 @@ import {
   createBlankPage,
   createTextBlock,
   createTitlePage,
+  TITLE_PAGE_ID,
   type ZinePageData,
 } from "../data/sections";
 import { initialZines } from "../data/mockZines";
@@ -141,10 +142,10 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
 
   const addTextBlock = useCallback(
     (zineId: string, pageIndex: number) => {
-      updatePageAt(zineId, pageIndex, (page) => ({
-        ...page,
-        textBlocks: [...page.textBlocks, createTextBlock()],
-      }));
+      updatePageAt(zineId, pageIndex, (page) => {
+        if (page.id === TITLE_PAGE_ID) return page;
+        return { ...page, textBlocks: [...page.textBlocks, createTextBlock()] };
+      });
     },
     [updatePageAt],
   );

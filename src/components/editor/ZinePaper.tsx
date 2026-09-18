@@ -3,7 +3,11 @@ import { CSSTransition, SwitchTransition } from "react-transition-group";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextContentBlockView from "./TextContentBlockView";
-import type { ZineTextBlock } from "../../data/sections";
+import {
+  estimateTextBlockCost,
+  ZINE_BLOCK_CAPACITY,
+  type ZineTextBlock,
+} from "../../data/sections";
 import { useElementSize } from "../../hooks/useElementSize";
 import { colors } from "../../theme";
 
@@ -18,9 +22,10 @@ interface ZinePaperProps {
 
 const PAGE_RATIO = 8.5 / 11;
 const MAX_PAGE_HEIGHT = 900;
-const BLOCK_TOP_MARGIN = 56;
-const BLOCK_HEIGHT = 100;
-const BLOCK_GAP = 12;
+const CONTENT_TOP_MARGIN = 56;
+const CONTENT_BOTTOM_MARGIN = 24;
+const BLOCK_GAP = 8;
+const MIN_BLOCK_HEIGHT = 88;
 
 export default function ZinePaper({
   title,
@@ -45,6 +50,20 @@ export default function ZinePaper({
   if (pageWidth > width) {
     pageWidth = width;
     pageHeight = pageWidth / PAGE_RATIO;
+  }
+
+  const blockCosts = textBlocks.map((block) => estimateTextBlockCost(block.text));
+  const availableHeight = Math.max(0, pageHeight - CONTENT_TOP_MARGIN - CONTENT_BOTTOM_MARGIN);
+  const gapTotal = BLOCK_GAP * Math.max(0, textBlocks.length - 1);
+  const usableHeight = Math.max(0, availableHeight - gapTotal);
+  const blockHeights = blockCosts.map((cost) =>
+    Math.max(MIN_BLOCK_HEIGHT, (cost / ZINE_BLOCK_CAPACITY) * usableHeight),
+  );
+  const blockTops: number[] = [];
+  let cursor = CONTENT_TOP_MARGIN;
+  for (const blockHeight of blockHeights) {
+    blockTops.push(cursor);
+    cursor += blockHeight + BLOCK_GAP;
   }
 
   return (
@@ -129,8 +148,8 @@ export default function ZinePaper({
                 <TextContentBlockView
                   key={block.id}
                   text={block.text}
-                  top={BLOCK_TOP_MARGIN + i * (BLOCK_HEIGHT + BLOCK_GAP)}
-                  height={BLOCK_HEIGHT}
+                  top={blockTops[i]}
+                  height={blockHeights[i]}
                   onConfirm={(text) => onUpdateTextBlock(block.id, text)}
                   onDelete={() => onDeleteTextBlock(block.id)}
                 />

@@ -89,6 +89,7 @@ export default function ZineEditor() {
               deletePage(zine.id, safePageIndex);
               setPageIndex((i) => Math.max(0, Math.min(i, pages.length - 2)));
             }}
+            canAddTextBlock={safePageIndex !== 0}
             onAddTextBlock={() => addTextBlock(zine.id, safePageIndex)}
           />
           <ZinePaper
