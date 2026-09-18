@@ -97,6 +97,7 @@ export default function ZineEditor() {
             title={zine.title}
             zoom={zoom}
             pageIndex={safePageIndex}
+            totalPages={pages.length}
             textBlocks={currentPage.textBlocks}
             onUpdateTextBlock={(blockId, text) =>
               updateTextBlock(zine.id, safePageIndex, blockId, text)
