@@ -1,9 +1,11 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import HeadingBlockView from "./HeadingBlockView";
 import TextContentBlockView from "./TextContentBlockView";
-import { VIRTUAL_PAGE_WIDTH, type ZinePageData, type ZineTextBlock } from "../../data/sections";
+import { VIRTUAL_PAGE_WIDTH, type ZineHeadingBlock, type ZinePageData } from "../../data/sections";
 import { useElementSize } from "../../hooks/useElementSize";
+import type { GeometryTransform } from "../../hooks/useBlockTransform";
 import { colors } from "../../theme";
 
 export interface ZinePaperHandle {
@@ -16,13 +18,14 @@ interface ZinePaperProps {
   selectedIndex: number;
   pages: ZinePageData[];
   onSelectIndex: (index: number) => void;
-  onUpdateTextBlock: (pageIndex: number, blockId: string, text: string) => void;
-  onTransformTextBlock: (
+  onUpdateBlockText: (pageIndex: number, blockId: string, text: string) => void;
+  onTransformBlock: (pageIndex: number, blockId: string, transform: GeometryTransform) => void;
+  onUpdateHeadingStyle: (
     pageIndex: number,
     blockId: string,
-    transform: Partial<Pick<ZineTextBlock, "x" | "y" | "width" | "height" | "rotation">>,
+    patch: Partial<Pick<ZineHeadingBlock, "level" | "color">>,
   ) => void;
-  onDeleteTextBlock: (pageIndex: number, blockId: string) => void;
+  onDeleteBlock: (pageIndex: number, blockId: string) => void;
 }
 
 const PAGE_RATIO = 8.5 / 11;
@@ -36,9 +39,10 @@ const ZinePaper = forwardRef<ZinePaperHandle, ZinePaperProps>(function ZinePaper
     selectedIndex,
     pages,
     onSelectIndex,
-    onUpdateTextBlock,
-    onTransformTextBlock,
-    onDeleteTextBlock,
+    onUpdateBlockText,
+    onTransformBlock,
+    onUpdateHeadingStyle,
+    onDeleteBlock,
   },
   ref,
 ) {
@@ -177,16 +181,28 @@ const ZinePaper = forwardRef<ZinePaperHandle, ZinePaperProps>(function ZinePaper
                 </Typography>
               )}
 
-              {page.textBlocks.map((block) => (
-                <TextContentBlockView
-                  key={block.id}
-                  block={block}
-                  scale={scale}
-                  onConfirmText={(text) => onUpdateTextBlock(index, block.id, text)}
-                  onTransform={(transform) => onTransformTextBlock(index, block.id, transform)}
-                  onDelete={() => onDeleteTextBlock(index, block.id)}
-                />
-              ))}
+              {page.blocks.map((block) =>
+                block.kind === "heading" ? (
+                  <HeadingBlockView
+                    key={block.id}
+                    block={block}
+                    scale={scale}
+                    onConfirmText={(text) => onUpdateBlockText(index, block.id, text)}
+                    onTransform={(transform) => onTransformBlock(index, block.id, transform)}
+                    onUpdateStyle={(patch) => onUpdateHeadingStyle(index, block.id, patch)}
+                    onDelete={() => onDeleteBlock(index, block.id)}
+                  />
+                ) : (
+                  <TextContentBlockView
+                    key={block.id}
+                    block={block}
+                    scale={scale}
+                    onConfirmText={(text) => onUpdateBlockText(index, block.id, text)}
+                    onTransform={(transform) => onTransformBlock(index, block.id, transform)}
+                    onDelete={() => onDeleteBlock(index, block.id)}
+                  />
+                ),
+              )}
             </Box>
           </Box>
         );

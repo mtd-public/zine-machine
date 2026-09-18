@@ -6,6 +6,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import TextFieldsIcon from "@mui/icons-material/TextFields";
+import TitleIcon from "@mui/icons-material/Title";
 import TuneIcon from "@mui/icons-material/Tune";
 import VerticalAlignBottomIcon from "@mui/icons-material/VerticalAlignBottom";
 import VerticalAlignTopIcon from "@mui/icons-material/VerticalAlignTop";
@@ -20,6 +21,7 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import DeleteZineModal from "./DeleteZineModal";
+import type { HeadingLevel } from "../../data/sections";
 import { colors } from "../../theme";
 
 interface EditPanelProps {
@@ -45,6 +47,7 @@ interface EditPanelProps {
   onDeletePage: () => void;
   canAddTextBlock: boolean;
   onAddTextBlock: () => void;
+  onAddHeadingBlock: (level: HeadingLevel) => void;
 }
 
 const iconButtonSx = {
@@ -75,6 +78,7 @@ export default function EditPanel({
   onDeletePage,
   canAddTextBlock,
   onAddTextBlock,
+  onAddHeadingBlock,
 }: EditPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -349,6 +353,36 @@ export default function EditPanel({
                     aria-label="Add Text Content"
                   >
                     <TextFieldsIcon fontSize="small" />
+                  </Fab>
+                </span>
+              </Tooltip>
+              <Tooltip title="Add Heading" placement="right">
+                <span>
+                  <Fab
+                    size="small"
+                    color="primary"
+                    onClick={() => {
+                      onAddHeadingBlock("heading");
+                      setPageContentOpen(false);
+                    }}
+                    aria-label="Add Heading"
+                  >
+                    <TitleIcon fontSize="medium" />
+                  </Fab>
+                </span>
+              </Tooltip>
+              <Tooltip title="Add Subheading" placement="right">
+                <span>
+                  <Fab
+                    size="small"
+                    color="primary"
+                    onClick={() => {
+                      onAddHeadingBlock("subheading");
+                      setPageContentOpen(false);
+                    }}
+                    aria-label="Add Subheading"
+                  >
+                    <TitleIcon fontSize="small" />
                   </Fab>
                 </span>
               </Tooltip>
