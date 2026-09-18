@@ -6,7 +6,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { createBlankPage, createTitlePage, type ZinePageData } from "../data/sections";
+import {
+  createBlankPage,
+  createTextBlock,
+  createTitlePage,
+  type ZinePageData,
+} from "../data/sections";
 import { initialZines } from "../data/mockZines";
 import type { Zine, ZineComment } from "../types";
 
@@ -24,6 +29,9 @@ interface ZinesContextValue {
   addPageAbove: (zineId: string, atIndex: number) => void;
   addPageBelow: (zineId: string, atIndex: number) => void;
   deletePage: (zineId: string, atIndex: number) => void;
+  addTextBlock: (zineId: string, pageIndex: number) => void;
+  updateTextBlock: (zineId: string, pageIndex: number, blockId: string, text: string) => void;
+  deleteTextBlock: (zineId: string, pageIndex: number, blockId: string) => void;
 }
 
 const ZinesContext = createContext<ZinesContextValue | undefined>(undefined);
@@ -119,6 +127,48 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updatePageAt = useCallback(
+    (zineId: string, pageIndex: number, updater: (page: ZinePageData) => ZinePageData) => {
+      setPages((prev) => {
+        const current = prev[zineId] ?? [createTitlePage()];
+        if (pageIndex < 0 || pageIndex >= current.length) return prev;
+        const next = current.map((page, i) => (i === pageIndex ? updater(page) : page));
+        return { ...prev, [zineId]: next };
+      });
+    },
+    [],
+  );
+
+  const addTextBlock = useCallback(
+    (zineId: string, pageIndex: number) => {
+      updatePageAt(zineId, pageIndex, (page) => ({
+        ...page,
+        textBlocks: [...page.textBlocks, createTextBlock()],
+      }));
+    },
+    [updatePageAt],
+  );
+
+  const updateTextBlock = useCallback(
+    (zineId: string, pageIndex: number, blockId: string, text: string) => {
+      updatePageAt(zineId, pageIndex, (page) => ({
+        ...page,
+        textBlocks: page.textBlocks.map((b) => (b.id === blockId ? { ...b, text } : b)),
+      }));
+    },
+    [updatePageAt],
+  );
+
+  const deleteTextBlock = useCallback(
+    (zineId: string, pageIndex: number, blockId: string) => {
+      updatePageAt(zineId, pageIndex, (page) => ({
+        ...page,
+        textBlocks: page.textBlocks.filter((b) => b.id !== blockId),
+      }));
+    },
+    [updatePageAt],
+  );
+
   const deleteZine = useCallback((id: string) => {
     setZines((prev) => prev.filter((z) => z.id !== id));
     setComments((prev) => {
@@ -152,6 +202,9 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
       addPageAbove,
       addPageBelow,
       deletePage,
+      addTextBlock,
+      updateTextBlock,
+      deleteTextBlock,
     }),
     [
       zines,
@@ -167,6 +220,9 @@ export function ZinesProvider({ children }: { children: ReactNode }) {
       addPageAbove,
       addPageBelow,
       deletePage,
+      addTextBlock,
+      updateTextBlock,
+      deleteTextBlock,
     ],
   );
 

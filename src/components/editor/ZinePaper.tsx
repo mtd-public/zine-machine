@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import TextContentBlockView from "./TextContentBlockView";
+import type { ZineTextBlock } from "../../data/sections";
 import { useElementSize } from "../../hooks/useElementSize";
 import { colors } from "../../theme";
 
@@ -9,12 +11,25 @@ interface ZinePaperProps {
   title: string;
   zoom: number;
   pageIndex: number;
+  textBlocks: ZineTextBlock[];
+  onUpdateTextBlock: (blockId: string, text: string) => void;
+  onDeleteTextBlock: (blockId: string) => void;
 }
 
 const PAGE_RATIO = 8.5 / 11;
 const MAX_PAGE_HEIGHT = 900;
+const BLOCK_TOP_MARGIN = 56;
+const BLOCK_HEIGHT = 100;
+const BLOCK_GAP = 12;
 
-export default function ZinePaper({ title, zoom, pageIndex }: ZinePaperProps) {
+export default function ZinePaper({
+  title,
+  zoom,
+  pageIndex,
+  textBlocks,
+  onUpdateTextBlock,
+  onDeleteTextBlock,
+}: ZinePaperProps) {
   const [containerRef, { width, height }] = useElementSize<HTMLDivElement>();
   const isTitlePage = pageIndex === 0;
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -109,6 +124,17 @@ export default function ZinePaper({ title, zoom, pageIndex }: ZinePaperProps) {
                   {title}
                 </Typography>
               )}
+
+              {textBlocks.map((block, i) => (
+                <TextContentBlockView
+                  key={block.id}
+                  text={block.text}
+                  top={BLOCK_TOP_MARGIN + i * (BLOCK_HEIGHT + BLOCK_GAP)}
+                  height={BLOCK_HEIGHT}
+                  onConfirm={(text) => onUpdateTextBlock(block.id, text)}
+                  onDelete={() => onDeleteTextBlock(block.id)}
+                />
+              ))}
             </Box>
           </CSSTransition>
         </SwitchTransition>
